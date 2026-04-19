@@ -1,0 +1,7 @@
+homepage.main:
+  path: '/home'
+  defaults:
+    _controller: '\Drupal\homepage\Controller\HomepageController::index'
+    _title: 'Home'
+  requirements:
+    _access: 'TRUE'

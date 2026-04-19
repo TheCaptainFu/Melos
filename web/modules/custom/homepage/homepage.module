@@ -1,0 +1,13 @@
+<?php
+
+/**
+ * Implements hook_theme().
+ */
+function homepage_theme() {
+  return [
+    'homepage' => [
+      'template' => 'homepage',
+      'variables' => [],
+    ],
+  ];
+}
