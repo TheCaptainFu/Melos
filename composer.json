@@ -26,6 +26,7 @@
         "drupal/pathauto": "^1.14",
         "drupal/redirect": "^1.12",
         "drupal/twig_tweak": "^3.4",
+        "drupal/webform": "^6.2@beta",
         "drush/drush": "^13.7"
     },
     "conflict": {
