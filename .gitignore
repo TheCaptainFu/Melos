@@ -1,0 +1,22 @@
+# Drupal
+web/sites/default/settings.php
+web/sites/default/files/
+web/sites/php_storage/
+
+# Composer
+vendor/
+web/core/
+web/modules/contrib/
+web/themes/contrib/
+web/libraries/
+
+# DDEV
+.ddev/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/

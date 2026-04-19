@@ -1,0 +1,16 @@
+name: GG
+type: theme
+description: 'Custom theme GG'
+core_version_requirement: ^10 || ^11
+base theme: false
+
+libraries:
+  - gg/global
+
+regions:
+  header: Header
+  primary_menu: 'Primary Menu'
+  breadcrumb: Breadcrumb
+  content: Content
+  sidebar: Sidebar
+  footer: Footer
