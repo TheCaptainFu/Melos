@@ -20,3 +20,4 @@ Thumbs.db
 # IDE
 .idea/
 .vscode/
+web/sites/default/settings.hostinger.php
