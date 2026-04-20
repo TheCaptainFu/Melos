@@ -1,0 +1,22 @@
+uuid: a8fd8bf7-5536-4996-8bcc-88ed35a5128a
+langcode: en
+status: true
+dependencies:
+  module:
+    - system
+  theme:
+    - gg
+_core:
+  default_config_hash: aeqlWs7HwctZeZC7ADcbxfqehJzBRfZKmuZz3DsH3_4
+id: gg_messages
+theme: gg
+region: header
+weight: 0
+provider: null
+plugin: system_messages_block
+settings:
+  id: system_messages_block
+  label: 'Status messages'
+  label_display: '0'
+  provider: system
+visibility: {  }
