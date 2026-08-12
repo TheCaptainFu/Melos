@@ -9,6 +9,9 @@ web/modules/contrib/
 web/themes/contrib/
 web/libraries/
 
+# NPM
+node_modules/
+
 # DDEV
 .ddev/
 
