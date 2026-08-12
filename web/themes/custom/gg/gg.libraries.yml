@@ -1,6 +1,28 @@
 global:
+  version: 1.x
   css:
     theme:
       css/style.css: {}
   js:
     js/main.js: {}
+    js/filters.js: {}
+
+photoswipe:
+  version: 1.x
+  js:
+    /libraries/photoswipe/dist/umd/photoswipe-lightbox.umd.min.js: { weight: -10 }
+    /libraries/photoswipe/dist/umd/photoswipe.umd.min.js: { weight: -9 }
+    js/photoswipe-all.js: { weight: 0 }
+  css:
+    theme:
+      /libraries/photoswipe/dist/photoswipe.css: {}
+
+splide:
+   version: 1.x
+   js:
+     /libraries/splidejs--splide/dist/js/splide.min.js: {}
+     js/splides.js: {}
+   css:
+     theme:
+       /libraries/splidejs--splide/dist/css/splide.min.css: {}
+  
