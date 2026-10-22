@@ -1,0 +1,23 @@
+gg_members.settings:
+  type: config_object
+  label: 'GG Members settings'
+  mapping:
+    free_months:
+      type: sequence
+      label: 'Calendar months (1-12) no class is charged for'
+      sequence:
+        type: integer
+    class_free_months:
+      type: sequence
+      label: 'Per-class overrides of the non-billable months'
+      sequence:
+        type: mapping
+        mapping:
+          tid:
+            type: integer
+            label: 'Class term ID'
+          months:
+            type: sequence
+            label: 'Calendar months (1-12) this class is not charged for'
+            sequence:
+              type: integer

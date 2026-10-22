@@ -1,0 +1,9 @@
+services:
+  gg_members.manager:
+    class: Drupal\gg_members\MemberManager
+    arguments:
+      - '@database'
+      - '@entity_type.manager'
+      - '@datetime.time'
+      - '@file.usage'
+      - '@config.factory'

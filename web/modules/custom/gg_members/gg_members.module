@@ -1,0 +1,95 @@
+<?php
+
+use Drupal\Core\Url;
+
+/**
+ * @file
+ * Hooks for the GG Members module.
+ */
+
+/**
+ * Implements hook_toolbar().
+ *
+ * Own standalone toolbar tab, same reasoning as gg_booking_toolbar(): the
+ * site's admin_toolbar_tools module rebuilds the "Administration" tray from
+ * its own curated list and drops links it doesn't recognize.
+ */
+function gg_members_toolbar() {
+  $items['gg_members_dashboard'] = [
+    '#cache' => [
+      'contexts' => ['user.permissions'],
+    ],
+  ];
+
+  if (\Drupal::currentUser()->hasPermission('administer gg_members')) {
+    $items['gg_members_dashboard'] += [
+      '#type' => 'toolbar_item',
+      'tab' => [
+        '#type' => 'link',
+        '#title' => t('Μέλη'),
+        '#url' => Url::fromRoute('gg_members.dashboard'),
+        '#attributes' => [
+          'title' => t('Μέλη & πληρωμές'),
+          'class' => ['toolbar-icon', 'toolbar-icon-gg-members'],
+        ],
+      ],
+      '#weight' => 160,
+      // The toolbar tab itself renders on every page, but its icon CSS
+      // lives in the 'admin' library — otherwise only attached from the
+      // module's own admin forms/controllers, so the icon would be missing
+      // (no background-image at all, not just the wrong color) everywhere
+      // else, front-end pages included.
+      '#attached' => ['library' => ['gg_members/admin']],
+    ];
+  }
+
+  return $items;
+}
+
+/**
+ * Implements hook_file_download().
+ *
+ * Member documents live under private://gg_members/ precisely so they're not
+ * public; core's own file_download hook only grants access through entity
+ * file fields, which these aren't, so without this nobody (not even admins)
+ * could open them.
+ */
+function gg_members_file_download($uri) {
+  if (!str_starts_with($uri, 'private://gg_members/')) {
+    return NULL;
+  }
+  if (!\Drupal::currentUser()->hasPermission('administer gg_members')) {
+    return -1;
+  }
+  $files = \Drupal::entityTypeManager()->getStorage('file')->loadByProperties(['uri' => $uri]);
+  $file = reset($files);
+  return $file ? $file->getDownloadHeaders() : -1;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function gg_members_theme() {
+  return [
+    'gg_members_dashboard' => [
+      'template' => 'gg-members-dashboard',
+      'variables' => [
+        'classes' => [],
+        'filters' => [],
+        'rows' => [],
+        'add_url' => NULL,
+        'stats' => [],
+        'pager' => NULL,
+      ],
+    ],
+    'gg_members_profile' => [
+      'template' => 'gg-members-profile',
+      'variables' => [
+        'member' => [],
+        'finance' => [],
+        'documents' => [],
+        'urls' => [],
+      ],
+    ],
+  ];
+}

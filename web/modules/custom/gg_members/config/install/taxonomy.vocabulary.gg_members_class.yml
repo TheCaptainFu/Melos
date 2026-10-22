@@ -1,0 +1,9 @@
+uuid: 7c43b40c-1e9d-4fd3-8273-91deed9d1e93
+langcode: el
+status: true
+dependencies: {  }
+name: 'Τάξεις μελών'
+vid: gg_members_class
+description: 'Τάξεις/τμήματα στα οποία ανήκουν τα μέλη.'
+weight: 0
+new_revision: false

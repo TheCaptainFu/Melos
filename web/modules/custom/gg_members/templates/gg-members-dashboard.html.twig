@@ -1,0 +1,192 @@
+{#
+/**
+ * @file
+ * Member roster listing for the GG Members admin dashboard.
+ *
+ * Available variables:
+ * - classes: tid => label, all classes in the gg_members_class vocabulary.
+ * - filters: current class_tid/status/owes filter values.
+ * - rows: list of member rows ready for display.
+ * - stats: roster-wide totals (this month's collection, member counts,
+ *   debts) — always reflects everyone, not just the filtered/paged rows
+ *   below.
+ * - pager: renderable pager element.
+ */
+#}
+{# lang="el" so text-transform: uppercase drops the accents (ΕΝΕΡΓΑ, not
+   ΕΝΕΡΓΆ) — the site itself is set to English. #}
+<div class="gg-members-admin gg-members-admin--dashboard" lang="el">
+  <div class="gg-members-stats">
+    {% if stats.month_billed %}
+      <div class="gg-members-stat">
+        <span class="gg-members-stat__value">
+          {{ stats.month_collected|number_format(2, ',', '.') }}€
+          <span class="gg-members-stat__of">/ {{ stats.month_expected|number_format(2, ',', '.') }}€</span>
+        </span>
+        <span class="gg-members-stat__label">{{ 'Είσπραξη μήνα'|t }} ({{ stats.month_percent }}%)</span>
+        <span class="gg-members-progress" aria-hidden="true"><span class="gg-members-progress__bar" style="width: {{ stats.month_percent }}%"></span></span>
+      </div>
+      <a href="{{ path('gg_members.dashboard', {'unpaid_current': 1}) }}" class="gg-members-stat gg-members-stat--link">
+        <span class="gg-members-stat__value">
+          {{ stats.month_paid }}
+          <span class="gg-members-stat__of">/ {{ stats.month_billed }}</span>
+        </span>
+        <span class="gg-members-stat__label">{{ 'Πλήρωσαν τον μήνα'|t }}</span>
+      </a>
+    {% else %}
+      <div class="gg-members-stat">
+        <span class="gg-members-stat__value">—</span>
+        <span class="gg-members-stat__label">{{ 'Ο μήνας δεν χρεώνεται'|t }}</span>
+      </div>
+    {% endif %}
+    <div class="gg-members-stat">
+      <span class="gg-members-stat__value">{{ stats.active_members }} / {{ stats.total_members }}</span>
+      <span class="gg-members-stat__label">{{ 'Ενεργά μέλη'|t }}</span>
+    </div>
+    <div class="gg-members-stat gg-members-stat--owes">
+      <span class="gg-members-stat__value">{{ stats.members_owing }}</span>
+      <span class="gg-members-stat__label">{{ 'Μέλη που χρωστάνε'|t }}</span>
+    </div>
+    <div class="gg-members-stat gg-members-stat--owes">
+      <span class="gg-members-stat__value">{{ stats.outstanding|number_format(2, ',', '.') }}€</span>
+      <span class="gg-members-stat__label">{{ 'Οφειλές'|t }}</span>
+    </div>
+  </div>
+
+  <div class="gg-members-actions">
+    <a href="{{ add_url }}" class="button button--primary">{{ '+ Νέο μέλος'|t }}</a>
+    <a href="{{ path('gg_members.export') }}" class="button gg-members-export">{{ 'Εξαγωγή σε Excel'|t }}</a>
+    <a href="{{ path('gg_members.settings') }}" class="button">{{ 'Ρυθμίσεις'|t }}</a>
+  </div>
+
+  <div class="gg-members-card gg-members-card--filters">
+    <form method="get" class="gg-members-filters">
+      <div class="gg-members-filters__field">
+        <label for="gg-members-filter-search">{{ 'Αναζήτηση'|t }}</label>
+        <input type="search" id="gg-members-filter-search" name="search" value="{{ filters.search }}" placeholder="{{ 'Όνομα, τηλέφωνο, email, ΑΜΚΑ ή δελτίο'|t }}">
+      </div>
+      <div class="gg-members-filters__field">
+        <label for="gg-members-filter-class">{{ 'Τάξη'|t }}</label>
+        <select id="gg-members-filter-class" name="class_tid">
+          <option value="">{{ '- Όλες -'|t }}</option>
+          {% for tid, label in classes %}
+            <option value="{{ tid }}"{{ filters.class_tid == tid ? ' selected' : '' }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="gg-members-filters__field">
+        <label for="gg-members-filter-status">{{ 'Κατάσταση'|t }}</label>
+        <select id="gg-members-filter-status" name="status">
+          <option value="">{{ '- Όλα -'|t }}</option>
+          <option value="1"{{ filters.status == '1' ? ' selected' : '' }}>{{ 'Ενεργά'|t }}</option>
+          <option value="0"{{ filters.status == '0' ? ' selected' : '' }}>{{ 'Ανενεργά'|t }}</option>
+        </select>
+      </div>
+      <div class="gg-members-filters__field gg-members-filters__field--checkbox">
+        <span class="gg-members-filters__spacer" aria-hidden="true">&nbsp;</span>
+        <label class="gg-members-chip">
+          <input type="checkbox" name="owes" value="1"{{ filters.owes ? ' checked' : '' }}>
+          {{ 'Μόνο όσοι χρωστάνε'|t }}
+        </label>
+      </div>
+      <div class="gg-members-filters__field gg-members-filters__field--checkbox">
+        <span class="gg-members-filters__spacer" aria-hidden="true">&nbsp;</span>
+        <label class="gg-members-chip">
+          <input type="checkbox" name="unpaid_current" value="1"{{ filters.unpaid_current ? ' checked' : '' }}>
+          {{ 'Δεν πλήρωσαν τον μήνα'|t }}
+        </label>
+      </div>
+      {# Filters apply on their own (filter-autosubmit.js); this stays for
+         Enter in the search box and for browsers without JavaScript. #}
+      <button type="submit" class="visually-hidden">{{ 'Φιλτράρισμα'|t }}</button>
+      {% if filters.search or filters.class_tid or filters.status is not same as(null) and filters.status != '' or filters.owes or filters.unpaid_current %}
+        <div class="gg-members-filters__field gg-members-filters__field--clear">
+          <span class="gg-members-filters__spacer" aria-hidden="true">&nbsp;</span>
+          <a href="{{ path('gg_members.dashboard') }}" class="gg-members-filters__clear">✕ {{ 'Καθαρισμός φίλτρων'|t }}</a>
+        </div>
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="gg-members-card gg-members-card--table">
+    <div class="gg-members-table-scroll">
+      <table class="gg-members-table">
+        <thead>
+          <tr>
+            <th>{{ 'Ονοματεπώνυμο'|t }}</th>
+            <th>{{ 'Τάξη'|t }}</th>
+            <th>{{ 'Συνδρομή'|t }}</th>
+            <th>{{ 'Τηλέφωνο'|t }}</th>
+            <th>{{ 'Οφειλή'|t }}</th>
+            <th>{{ 'Έγγραφα'|t }}</th>
+            <th><span class="visually-hidden">{{ 'Ενέργειες'|t }}</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+            <tr class="{{ row.status ? 'gg-members-row' : 'gg-members-row gg-members-row--inactive' }}">
+              <td>
+                <a href="{{ row.view_url }}" class="gg-members-name-link">{{ row.name }}</a>
+                {% if not row.status %}
+                  <span class="gg-members-badge gg-members-badge--inactive">{{ 'Ανενεργό'|t }}</span>
+                {% endif %}
+              </td>
+              <td class="gg-members-cell--nowrap">{{ row.class_name }}</td>
+              <td class="gg-members-cell--nowrap">{{ row.monthly_fee }}€</td>
+              <td class="gg-members-cell--nowrap">
+                {% if row.phone %}
+                  <a href="tel:{{ row.phone }}" class="gg-members-phone">{{ row.phone }}</a>
+                  {% if row.phone_is_guardian %}
+                    <span class="gg-members-cell-note">{{ 'κηδεμόνας'|t }}</span>
+                  {% endif %}
+                {% else %}
+                  <span class="gg-members-cell-empty">—</span>
+                {% endif %}
+              </td>
+              <td class="gg-members-cell--nowrap">
+                {% if row.owes %}
+                  <a href="{{ row.payments_url }}" class="gg-members-debt" title="{{ row.unpaid_title }}">
+                    <span class="gg-members-badge gg-members-badge--owes">{{ row.outstanding }}€</span>
+                    <span class="gg-members-cell-note">{{ row.unpaid_count_label }}</span>
+                  </a>
+                {% else %}
+                  <span class="gg-members-badge gg-members-badge--paid">{{ 'Εξοφλημένο'|t }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <ul class="gg-members-docs">
+                  {% for doc in row.documents %}
+                    <li class="gg-members-doc gg-members-doc--{{ doc.ok ? 'ok' : (doc.required ? 'missing' : 'none') }}" title="{{ doc.title }}">
+                      {% if doc.key == 'doctor_note' %}
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M12 8v8M8 12h8"/></svg>
+                      {% elseif doc.key == 'photo' %}
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5h3l1.8-2.5h6.4L17 8.5h3V19H4z"/><circle cx="12" cy="13.5" r="3.2"/></svg>
+                      {% elseif doc.key == 'birth_certificate' %}
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h7.5l4 4v13h-11.5z"/><path d="M13.5 3.5v4.5h4.5M9.5 13h5.5M9.5 16.5h5.5"/></svg>
+                      {% else %}
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12.5" rx="2"/><circle cx="8.5" cy="12" r="2"/><path d="M13.5 10.5h4.5M13.5 14h4.5"/></svg>
+                      {% endif %}
+                      <span class="visually-hidden">{{ doc.title }}</span>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </td>
+              <td class="gg-members-row-actions">
+                <a href="{{ row.payments_url }}" class="gg-members-action--payments">{{ 'Πληρωμές'|t }}</a>
+                <a href="{{ row.edit_url }}" class="gg-members-action--icon" title="{{ 'Επεξεργασία'|t }}" aria-label="{{ 'Επεξεργασία: @name'|t({'@name': row.name}) }}">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>
+                </a>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="7" class="gg-members-table-empty">{{ 'Δεν βρέθηκαν μέλη.'|t }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {{ pager }}
+  </div>
+</div>

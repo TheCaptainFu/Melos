@@ -1,0 +1,133 @@
+{#
+/**
+ * @file
+ * Read-only profile page for a single member.
+ *
+ * Available variables:
+ * - member: name, class_name, status, age, birth_date, enrollment_date,
+ *   left_date, monthly_fee, phone, email, card_number, amka, guardian_name, guardian_phone,
+ *   notes, photo_url (dates already formatted as dd/mm/YYYY).
+ * - finance: unpaid_months (formatted), outstanding, total_paid,
+ *   payment_count, last_payment_date.
+ * - documents: list of {label, files: [{name, url}]}.
+ * - urls: edit, payments, delete, back.
+ */
+#}
+<div class="gg-members-admin gg-members-profile" lang="el">
+  <div class="gg-members-actions">
+    <a href="{{ urls.back }}" class="button">{{ '← Όλα τα μέλη'|t }}</a>
+    <a href="{{ urls.edit }}" class="button button--primary">{{ 'Επεξεργασία'|t }}</a>
+    <a href="{{ urls.payments }}" class="button">{{ 'Πληρωμές'|t }}</a>
+    <a href="{{ urls.delete }}" class="button button--danger gg-members-profile__delete">{{ 'Διαγραφή'|t }}</a>
+  </div>
+
+  <div class="gg-members-card gg-members-profile__header">
+    <div class="gg-members-profile__photo">
+      {% if member.photo_url %}
+        <img src="{{ member.photo_url }}" alt="{{ member.name }}">
+      {% else %}
+        <span class="gg-members-profile__initial">{{ member.name|first|upper }}</span>
+      {% endif %}
+    </div>
+    <div class="gg-members-profile__identity">
+      <h2 class="gg-members-profile__name">{{ member.name }}</h2>
+      <div class="gg-members-profile__meta">
+        {% if member.age is not null %}<span>{{ '@age ετών'|t({'@age': member.age}) }}</span>{% endif %}
+        {% if member.class_name %}<span>{{ member.class_name }}</span>{% endif %}
+        <span class="gg-members-badge gg-members-badge--{{ member.status ? 'active' : 'inactive' }}">
+          {{ member.status ? 'Ενεργό'|t : 'Ανενεργό'|t }}
+        </span>
+        {% if finance.unpaid_months %}
+          <a href="{{ urls.payments }}" class="gg-members-badge gg-members-badge--owes" title="{{ finance.unpaid_months|join(', ') }}">{{ 'Χρωστάει'|t }} ({{ finance.unpaid_months|length }})</a>
+        {% else %}
+          <span class="gg-members-badge gg-members-badge--paid">{{ 'Ενήμερος'|t }}</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="gg-members-profile__grid">
+    <div class="gg-members-card gg-members-profile__section">
+      <h3>{{ 'Στοιχεία'|t }}</h3>
+      <dl>
+        <dt>{{ 'Ημερομηνία γέννησης'|t }}</dt>
+        <dd>{{ member.birth_date ?: '-' }}</dd>
+        <dt>{{ 'Τάξη'|t }}</dt>
+        <dd>{{ member.class_name ?: '-' }}</dd>
+        <dt>{{ 'Μηνιαία συνδρομή'|t }}</dt>
+        <dd>{{ member.monthly_fee }}€</dd>
+        <dt>{{ 'Ημερομηνία εγγραφής'|t }}</dt>
+        <dd>{{ member.enrollment_date ?: '-' }}</dd>
+        {% if member.left_date %}
+          <dt>{{ 'Ημερομηνία αποχώρησης'|t }}</dt>
+          <dd>{{ member.left_date }}</dd>
+        {% endif %}
+        <dt>{{ 'Τηλέφωνο'|t }}</dt>
+        <dd>{% if member.phone %}<a href="tel:{{ member.phone }}">{{ member.phone }}</a>{% else %}-{% endif %}</dd>
+        <dt>{{ 'Email'|t }}</dt>
+        <dd>{% if member.email %}<a href="mailto:{{ member.email }}">{{ member.email }}</a>{% else %}-{% endif %}</dd>
+        <dt>{{ 'Αριθμός δελτίου'|t }}</dt>
+        <dd>{{ member.card_number ?: '-' }}</dd>
+        <dt>{{ 'ΑΜΚΑ'|t }}</dt>
+        <dd>{{ member.amka ?: '-' }}</dd>
+      </dl>
+    </div>
+
+    <div class="gg-members-card gg-members-profile__section">
+      <h3>{{ 'Κηδεμόνας'|t }}</h3>
+      {% if member.guardian_name or member.guardian_phone %}
+        <dl>
+          <dt>{{ 'Ονοματεπώνυμο'|t }}</dt>
+          <dd>{{ member.guardian_name ?: '-' }}</dd>
+          <dt>{{ 'Τηλέφωνο'|t }}</dt>
+          <dd>{% if member.guardian_phone %}<a href="tel:{{ member.guardian_phone }}">{{ member.guardian_phone }}</a>{% else %}-{% endif %}</dd>
+        </dl>
+      {% else %}
+        <p class="gg-members-legend">{{ 'Δεν έχουν συμπληρωθεί στοιχεία κηδεμόνα.'|t }}</p>
+      {% endif %}
+    </div>
+
+    <div class="gg-members-card gg-members-profile__section">
+      <h3>{{ 'Οικονομικά'|t }}</h3>
+      <dl>
+        <dt>{{ 'Σύνολο πληρωμών'|t }}</dt>
+        <dd>{{ finance.total_paid }}€ ({{ finance.payment_count }})</dd>
+        <dt>{{ 'Τελευταία πληρωμή'|t }}</dt>
+        <dd>{{ finance.last_payment_date ?: 'Καμία ακόμα'|t }}</dd>
+        <dt>{{ 'Οφειλή'|t }}</dt>
+        <dd>
+          {% if finance.unpaid_months %}
+            <strong class="gg-members-profile__owes">{{ finance.outstanding }}€</strong><br>
+            {{ finance.unpaid_months|join(', ') }}
+          {% else %}
+            {{ 'Καμία'|t }}
+          {% endif %}
+        </dd>
+      </dl>
+      <a href="{{ urls.payments }}">{{ 'Καταχώρηση / ιστορικό πληρωμών →'|t }}</a>
+    </div>
+
+    <div class="gg-members-card gg-members-profile__section">
+      <h3>{{ 'Έγγραφα'|t }}</h3>
+      <dl>
+        {% for document in documents %}
+          <dt>{{ document.label }}</dt>
+          <dd>
+            {% for file in document.files %}
+              <a href="{{ file.url }}" target="_blank">{{ file.name }}</a>{% if not loop.last %}<br>{% endif %}
+            {% else %}
+              <span class="gg-members-badge gg-members-badge--owes">{{ 'Δεν έχει'|t }}</span>
+            {% endfor %}
+          </dd>
+        {% endfor %}
+      </dl>
+    </div>
+  </div>
+
+  {% if member.notes %}
+    <div class="gg-members-card gg-members-profile__section">
+      <h3>{{ 'Σημειώσεις'|t }}</h3>
+      <p class="gg-members-profile__notes">{{ member.notes }}</p>
+    </div>
+  {% endif %}
+</div>

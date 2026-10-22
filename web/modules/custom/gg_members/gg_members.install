@@ -1,0 +1,456 @@
+<?php
+
+/**
+ * @file
+ * Install and schema hooks for the GG Members module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function gg_members_schema() {
+  $schema['gg_members_member'] = [
+    'description' => 'Roster of academy members, one row per person.',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'name' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'class_tid' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Taxonomy term id from the gg_members_class vocabulary.',
+      ],
+      'monthly_fee' => [
+        'type' => 'numeric',
+        'precision' => 8,
+        'scale' => 2,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'phone' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => FALSE,
+      ],
+      'email' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ],
+      'guardian_name' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'Parent/guardian contact name, for minors.',
+      ],
+      'guardian_phone' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => FALSE,
+      ],
+      'enrollment_date' => [
+        'type' => 'varchar',
+        'length' => 10,
+        'not null' => FALSE,
+        'description' => 'ISO date YYYY-MM-DD.',
+      ],
+      'birth_date' => [
+        'type' => 'varchar',
+        'length' => 10,
+        'not null' => FALSE,
+        'description' => 'ISO date YYYY-MM-DD.',
+      ],
+      'amka' => [
+        'type' => 'varchar',
+        'length' => 11,
+        'not null' => FALSE,
+        'description' => 'Greek social security number (ΑΜΚΑ), 11 digits.',
+      ],
+      'card_number' => [
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => FALSE,
+        'description' => 'Athlete card number (αριθμός δελτίου).',
+      ],
+      'status' => [
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 1,
+        'description' => '1 = active, 0 = inactive/left.',
+      ],
+      'left_date' => [
+        'type' => 'varchar',
+        'length' => 10,
+        'not null' => FALSE,
+        'description' => 'ISO date YYYY-MM-DD the member left; monthly fees stop accruing after this month.',
+      ],
+      'notes' => [
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+      ],
+      'created' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'changed' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'class_status' => ['class_tid', 'status'],
+    ],
+    'foreign keys' => [
+      'class' => [
+        'table' => 'taxonomy_term_field_data',
+        'columns' => ['class_tid' => 'tid'],
+      ],
+    ],
+  ];
+
+  $schema['gg_members_payment'] = [
+    'description' => 'Payment history, one row per recorded payment; a month can take several (instalments).',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'member_id' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'amount' => [
+        'type' => 'numeric',
+        'precision' => 8,
+        'scale' => 2,
+        'not null' => TRUE,
+      ],
+      'payment_date' => [
+        'type' => 'varchar',
+        'length' => 10,
+        'not null' => TRUE,
+        'description' => 'ISO date YYYY-MM-DD.',
+      ],
+      'month_covered' => [
+        'type' => 'varchar',
+        'length' => 7,
+        'not null' => TRUE,
+        'description' => 'YYYY-MM; the subscription month this payment covers.',
+      ],
+      'notes' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ],
+      'created' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'member_month' => ['member_id', 'month_covered'],
+      'member_date' => ['member_id', 'payment_date'],
+    ],
+    'foreign keys' => [
+      'member' => [
+        'table' => 'gg_members_member',
+        'columns' => ['member_id' => 'id'],
+      ],
+    ],
+  ];
+
+  $schema['gg_members_file'] = [
+    'description' => 'Uploaded documents per member (doctor note, photo, birth certificate) - unlimited files per category.',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'member_id' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'category' => [
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'description' => "'doctor_note', 'photo', 'birth_certificate', or 'card'.",
+      ],
+      'fid' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'created' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'member_category' => ['member_id', 'category'],
+    ],
+    'foreign keys' => [
+      'member' => [
+        'table' => 'gg_members_member',
+        'columns' => ['member_id' => 'id'],
+      ],
+      'file' => [
+        'table' => 'file_managed',
+        'columns' => ['fid' => 'fid'],
+      ],
+    ],
+  ];
+
+  $schema['gg_members_fee'] = gg_members_fee_table();
+
+  return $schema;
+}
+
+/**
+ * Schema of the gg_members_fee table, shared with gg_members_update_10007().
+ */
+function gg_members_fee_table(): array {
+  return [
+    'description' => 'Monthly fee history per member: each row is the fee in force from effective_from on, so past months stay charged at the fee of their time.',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'member_id' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'fee' => [
+        'type' => 'numeric',
+        'precision' => 8,
+        'scale' => 2,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'effective_from' => [
+        'type' => 'varchar',
+        'length' => 7,
+        'not null' => TRUE,
+        'description' => 'YYYY-MM; the first month this fee is charged.',
+      ],
+      'created' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'member_from' => ['member_id', 'effective_from'],
+    ],
+    'foreign keys' => [
+      'member' => [
+        'table' => 'gg_members_member',
+        'columns' => ['member_id' => 'id'],
+      ],
+    ],
+  ];
+}
+
+/**
+ * Adds the gg_members_file table (unlimited files per category) and
+ * migrates the old single doctor_note_fid column into it.
+ */
+function gg_members_update_10001(): void {
+  $database = \Drupal::database();
+  $schema = $database->schema();
+
+  if (!$schema->tableExists('gg_members_file')) {
+    $schema->createTable('gg_members_file', [
+      'description' => 'Uploaded documents per member (doctor note, photo, birth certificate) - unlimited files per category.',
+      'fields' => [
+        'id' => ['type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE],
+        'member_id' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE],
+        'category' => ['type' => 'varchar', 'length' => 32, 'not null' => TRUE],
+        'fid' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE],
+        'created' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE],
+      ],
+      'primary key' => ['id'],
+      'indexes' => [
+        'member_category' => ['member_id', 'category'],
+      ],
+    ]);
+  }
+
+  if ($schema->fieldExists('gg_members_member', 'doctor_note_fid')) {
+    $rows = $database->select('gg_members_member', 'm')
+      ->fields('m', ['id', 'doctor_note_fid'])
+      ->isNotNull('doctor_note_fid')
+      ->execute();
+    foreach ($rows as $row) {
+      $database->insert('gg_members_file')
+        ->fields([
+          'member_id' => $row->id,
+          'category' => 'doctor_note',
+          'fid' => $row->doctor_note_fid,
+          'created' => \Drupal::time()->getRequestTime(),
+        ])
+        ->execute();
+    }
+
+    $schema->dropField('gg_members_member', 'doctor_note_fid');
+  }
+}
+
+/**
+ * Drops doctor_note_expiry - the doctor's note is now a plain "has one or
+ * more files" badge like the photo/birth-certificate categories, with no
+ * per-member expiry date to track.
+ */
+function gg_members_update_10002(): void {
+  $schema = \Drupal::database()->schema();
+  if ($schema->fieldExists('gg_members_member', 'doctor_note_expiry')) {
+    $schema->dropField('gg_members_member', 'doctor_note_expiry');
+  }
+}
+
+/**
+ * Adds left_date so inactive members stop accruing unpaid months, and
+ * backfills it for already-inactive members from their last edit (the
+ * closest record we have of when they were switched off).
+ */
+function gg_members_update_10003(): void {
+  $database = \Drupal::database();
+  $schema = $database->schema();
+
+  if (!$schema->fieldExists('gg_members_member', 'left_date')) {
+    $schema->addField('gg_members_member', 'left_date', [
+      'type' => 'varchar',
+      'length' => 10,
+      'not null' => FALSE,
+      'description' => 'ISO date YYYY-MM-DD the member left; monthly fees stop accruing after this month.',
+    ]);
+  }
+
+  $rows = $database->select('gg_members_member', 'm')
+    ->fields('m', ['id', 'changed'])
+    ->condition('status', 0)
+    ->isNull('left_date')
+    ->execute();
+  foreach ($rows as $row) {
+    $database->update('gg_members_member')
+      ->fields(['left_date' => date('Y-m-d', (int) $row->changed)])
+      ->condition('id', $row->id)
+      ->execute();
+  }
+}
+
+/**
+ * Adds the member's ΑΜΚΑ (Greek social security number).
+ */
+function gg_members_update_10005(): void {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->fieldExists('gg_members_member', 'amka')) {
+    $schema->addField('gg_members_member', 'amka', [
+      'type' => 'varchar',
+      'length' => 11,
+      'not null' => FALSE,
+      'description' => 'Greek social security number (ΑΜΚΑ), 11 digits.',
+    ]);
+  }
+}
+
+/**
+ * Adds the member's date of birth.
+ */
+function gg_members_update_10004(): void {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->fieldExists('gg_members_member', 'birth_date')) {
+    $schema->addField('gg_members_member', 'birth_date', [
+      'type' => 'varchar',
+      'length' => 10,
+      'not null' => FALSE,
+      'description' => 'ISO date YYYY-MM-DD.',
+    ]);
+  }
+}
+
+/**
+ * Adds the member's athlete card number (αριθμός δελτίου).
+ */
+function gg_members_update_10006(): void {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->fieldExists('gg_members_member', 'card_number')) {
+    $schema->addField('gg_members_member', 'card_number', [
+      'type' => 'varchar',
+      'length' => 32,
+      'not null' => FALSE,
+      'description' => 'Athlete card number (αριθμός δελτίου).',
+    ]);
+  }
+}
+
+/**
+ * Billing upgrade: fee history (past months keep the fee of their time),
+ * several payments per month (instalments), and the non-billable months
+ * setting. Seeds each member's history with their current fee from
+ * enrollment on, which is how every month was charged until now.
+ */
+function gg_members_update_10007(): void {
+  $database = \Drupal::database();
+  $schema = $database->schema();
+
+  if (!$schema->tableExists('gg_members_fee')) {
+    $schema->createTable('gg_members_fee', gg_members_fee_table());
+
+    $now = \Drupal::time()->getRequestTime();
+    $rows = $database->select('gg_members_member', 'm')
+      ->fields('m', ['id', 'monthly_fee', 'enrollment_date', 'created'])
+      ->execute();
+    foreach ($rows as $row) {
+      $database->insert('gg_members_fee')
+        ->fields([
+          'member_id' => $row->id,
+          'fee' => $row->monthly_fee,
+          'effective_from' => $row->enrollment_date ? substr($row->enrollment_date, 0, 7) : date('Y-m', (int) $row->created),
+          'created' => $now,
+        ])
+        ->execute();
+    }
+  }
+
+  if ($schema->indexExists('gg_members_payment', 'member_month')) {
+    $schema->dropUniqueKey('gg_members_payment', 'member_month');
+    $schema->addIndex('gg_members_payment', 'member_month', ['member_id', 'month_covered'], [
+      'fields' => [
+        'member_id' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE],
+        'month_covered' => ['type' => 'varchar', 'length' => 7, 'not null' => TRUE],
+      ],
+    ]);
+  }
+
+  $config = \Drupal::configFactory()->getEditable('gg_members.settings');
+  if ($config->isNew()) {
+    $config->setData(['free_months' => [], 'class_free_months' => []])->save();
+  }
+}

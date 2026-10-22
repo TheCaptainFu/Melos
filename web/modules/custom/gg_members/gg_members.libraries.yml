@@ -1,0 +1,39 @@
+remember_scroll:
+  version: 1.0.0
+  js:
+    js/remember-scroll.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+
+admin:
+  version: 1.0.32
+  css:
+    theme:
+      css/admin.css: {}
+
+file_delete:
+  version: 1.0.1
+  js:
+    js/file-delete.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+    - core/jquery
+    - core/drupal.ajax
+
+payment_form:
+  version: 1.0.0
+  js:
+    js/payment-form.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+
+filter_autosubmit:
+  version: 1.0.0
+  js:
+    js/filter-autosubmit.js: {}
+  dependencies:
+    - core/drupal
+    - core/once

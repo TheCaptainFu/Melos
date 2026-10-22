@@ -1,0 +1,8 @@
+name: GG Members
+type: module
+description: 'Member roster and monthly subscription payment tracking, per class.'
+core_version_requirement: ^10||^11
+package: Custom
+dependencies:
+  - drupal:taxonomy
+  - drupal:file

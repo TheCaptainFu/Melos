@@ -1,0 +1,900 @@
+/* GG Members - admin dashboard, member form, payment history (Claro admin theme). */
+
+.gg-members-admin {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  /* Room for Claro's focus ring (drawn a few px outside inputs/buttons),
+     which overflow-x:hidden would otherwise clip at the left/right edge. */
+  padding-left: 6px;
+  padding-right: 6px;
+  box-sizing: border-box;
+}
+
+/* The roster page lets the table grow as wide as it needs, and any
+   non-visible overflow here would stop its header row from sticking. */
+.gg-members-admin--dashboard {
+  overflow: visible;
+}
+
+.gg-members-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+  /* Room above for the focus ring (the sides are covered by
+     .gg-members-admin's own padding). */
+  padding-top: 6px;
+}
+
+.gg-members-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.gg-members-stat {
+  flex: 1 1 160px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gg-members-stat__value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.gg-members-stat__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6b7280;
+}
+
+.gg-members-stat--owes .gg-members-stat__value {
+  color: #b91c1c;
+}
+
+.gg-members-stat__of {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.gg-members-progress {
+  display: block;
+  height: 6px;
+  margin-top: 4px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.gg-members-progress__bar {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: #16a34a;
+}
+
+a.gg-members-stat--link {
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+a.gg-members-stat--link:hover,
+a.gg-members-stat--link:focus-visible {
+  border-color: #93c5fd;
+  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.12);
+}
+
+.gg-members-legend {
+  color: #4b5563;
+  margin: 0 0 15px;
+}
+
+.gg-members-fieldset {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 20px 0 0;
+  /* <fieldset> has an implicit min-width:min-content that ignores any
+     overflow-x:auto wrapper inside it, forcing the page wider than the
+     viewport on mobile if its content (e.g. a wide table) is wide enough. */
+  min-width: 0;
+}
+
+.gg-members-unpaid-banner {
+  background: #fee2e2;
+  color: #7f1d1d;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 0 0 15px;
+  font-size: 0.9rem;
+}
+
+.gg-members-unpaid-banner--clear {
+  background: #dcfce7;
+  color: #166534;
+  border-color: #86efac;
+}
+
+.gg-members-fieldset legend {
+  font-weight: 600;
+  padding: 0 4px 0 0;
+}
+
+.gg-members-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  margin-bottom: 20px;
+}
+
+.gg-members-card--filters {
+  padding: 20px 24px;
+}
+
+.gg-members-card--table {
+  padding: 8px 24px 20px;
+}
+
+.gg-members-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.gg-members-filters__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gg-members-filters__field label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.gg-members-filters__spacer {
+  font-size: 0.8rem;
+  line-height: 1;
+  visibility: hidden;
+}
+
+.gg-members-filters__field--checkbox label {
+  text-transform: none;
+  letter-spacing: normal;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  margin: 0;
+}
+
+/* The yes/no filters as toggle chips: the checkbox itself is hidden and
+   the label is the button, filled in while the filter is on. */
+.gg-members-filters__field--checkbox label.gg-members-chip {
+  gap: 6px;
+  padding: 0 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 0.9rem;
+  color: #374151;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.gg-members-chip input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+/* Same selector weight as the base chip rule above, or it never wins. */
+.gg-members-filters__field--checkbox label.gg-members-chip:hover {
+  border-color: #60a5fa;
+  background: #f0f7ff;
+  color: #1d4ed8;
+  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.15);
+  transform: translateY(-1px);
+}
+
+.gg-members-filters__field--checkbox label.gg-members-chip:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.gg-members-chip:has(input:focus-visible) {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+.gg-members-filters__field--checkbox label.gg-members-chip:has(input:checked) {
+  border-color: #1d4ed8;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.gg-members-filters__field--checkbox label.gg-members-chip:has(input:checked):hover {
+  background: #dbeafe;
+}
+
+.gg-members-chip:has(input:checked)::before {
+  content: '✓';
+  font-weight: 700;
+}
+
+.gg-members-filters__field select,
+.gg-members-filters__field input[type="search"] {
+  height: 40px;
+  min-width: 160px;
+  padding: 0 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 0.95rem;
+  color: #111827;
+}
+
+.gg-members-filters__field input[type="search"] {
+  min-width: 240px;
+}
+
+.gg-members-filters__field--submit .button {
+  margin: 0;
+  text-align: center;
+}
+
+.gg-members-filters__clear {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #b91c1c;
+  text-decoration: none;
+  transition: background-color 0.15s;
+}
+
+.gg-members-filters__clear:hover,
+.gg-members-filters__clear:focus-visible {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.gg-members-table-scroll {
+  width: 100%;
+}
+
+/* The roster table is left at full size (no inner scroll box) and its
+   header row sticks to the top of the window instead, just below the admin
+   toolbar (whose height Drupal exposes as --drupal-displace-offset-top), so
+   the column titles stay visible down a long list. Any overflow other than
+   visible on an ancestor would break this — see the dashboard override of
+   .gg-members-admin above. */
+.gg-members-table thead th {
+  position: sticky;
+  top: var(--drupal-displace-offset-top, 0px);
+  z-index: 2;
+  /* border-bottom doesn't stick along with a sticky cell under
+     border-collapse, so draw the divider as a shadow instead. */
+  box-shadow: inset 0 -1px 0 #e5e7eb;
+}
+
+.gg-members-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.gg-members-table th {
+  text-align: left;
+  padding: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6b7280;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.gg-members-table td {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid #f0f1f3;
+  vertical-align: middle;
+  font-size: 0.95rem;
+}
+
+.gg-members-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.gg-members-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Member profile page. */
+/* Pushed to the far end of the row, away from Edit, so it isn't hit by
+   accident. */
+.gg-members-actions .gg-members-profile__delete {
+  margin-left: auto;
+}
+
+.gg-members-profile__header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 24px;
+}
+
+.gg-members-profile__photo {
+  flex: 0 0 96px;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gg-members-profile__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gg-members-profile__initial {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #6b7280;
+}
+
+.gg-members-profile__name {
+  margin: 0 0 8px;
+  font-size: 1.6rem;
+}
+
+.gg-members-profile__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  color: #4b5563;
+}
+
+.gg-members-profile__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 0 20px;
+}
+
+.gg-members-profile__section {
+  padding: 18px 24px;
+}
+
+.gg-members-profile__section h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  /* Claro's own primary blue, so it matches the rest of the admin UI. */
+  color: var(--color-absolutezero, #003ecc);
+}
+
+.gg-members-profile__section dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 16px;
+  margin: 0 0 12px;
+}
+
+.gg-members-profile__section dt {
+  font-weight: 600;
+  color: #374151;
+}
+
+.gg-members-profile__section dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.gg-members-profile__owes {
+  color: #b91c1c;
+}
+
+.gg-members-profile__notes {
+  margin: 0;
+  white-space: pre-line;
+}
+
+.gg-members-name-link {
+  color: #111827;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.gg-members-name-link:hover {
+  color: #003ecc;
+  text-decoration: underline;
+}
+
+/* Roster cells. */
+.gg-members-cell--nowrap {
+  white-space: nowrap;
+}
+
+.gg-members-cell-note {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.gg-members-cell-empty {
+  color: #9ca3af;
+}
+
+.gg-members-phone {
+  color: inherit;
+  text-decoration: none;
+}
+
+.gg-members-phone:hover {
+  color: #003ecc;
+  text-decoration: underline;
+}
+
+.gg-members-row--inactive .gg-members-name-link {
+  color: #6b7280;
+}
+
+.gg-members-row .gg-members-badge--inactive {
+  margin-left: 6px;
+  vertical-align: 1px;
+}
+
+/* Debt cell: the amount as a red badge, the month count under it; the
+   whole thing links to the member's payments. */
+.gg-members-debt {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.gg-members-debt .gg-members-badge--owes {
+  box-shadow: 0 0 0 1px rgba(185, 28, 28, 0.3);
+}
+
+.gg-members-debt:hover .gg-members-badge--owes {
+  background: #fecaca;
+}
+
+/* Documents cell: one small round icon per document — green when on file,
+   grey when not, red only for the (required) doctor's note. */
+.gg-members-docs {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gg-members-doc {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  border-radius: 50%;
+  cursor: help;
+}
+
+.gg-members-doc svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.gg-members-doc--ok {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.gg-members-doc--missing {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.gg-members-doc--none {
+  background: #f3f4f6;
+  color: #9ca3af;
+}
+
+.gg-members-table-empty {
+  text-align: center !important;
+  color: #6b7280;
+  padding: 30px 12px !important;
+}
+
+.gg-members-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.gg-members-row-actions a {
+  display: inline-block;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #c7d2fe;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: center;
+}
+
+.gg-members-row-actions a:hover {
+  background: #e0e7ff;
+}
+
+/* Higher specificity than ".gg-members-row-actions a" above (which these
+   would otherwise lose to and never actually apply, regardless of source
+   order) — always qualify with the row-actions ancestor + element type. */
+.gg-members-row-actions a.gg-members-action--payments {
+  border-color: #93c5fd;
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.gg-members-row-actions a.gg-members-action--payments:hover {
+  background: #bfdbfe;
+}
+
+/* Edit as a quiet square icon button next to "Πληρωμές"; deleting a
+   member is only offered on their profile, away from the daily list. */
+.gg-members-row-actions a.gg-members-action--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-color: #e5e7eb;
+  background: #fff;
+  color: #4b5563;
+}
+
+.gg-members-row-actions a.gg-members-action--icon:hover,
+.gg-members-row-actions a.gg-members-action--icon:focus-visible {
+  border-color: #d1d5db;
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.gg-members-row-actions svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.gg-members-actions .gg-members-export {
+  border-color: #86efac;
+  background: #dcfce7;
+  color: #166534;
+}
+
+.gg-members-actions .gg-members-export:hover {
+  background: #bbf7d0;
+}
+
+.gg-members-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+a.gg-members-badge--owes {
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(185, 28, 28, 0.3);
+}
+
+a.gg-members-badge--owes:hover {
+  background: #fecaca;
+}
+
+.gg-members-badge--active,
+.gg-members-badge--paid {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.gg-members-badge--inactive {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.gg-members-badge--owes {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Toolbar icon: a plain person/roster glyph, same data-URI SVG technique
+   core uses for its own toolbar tabs. */
+.toolbar-bar .toolbar-icon-gg-members::before {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3e%3cpath fill='%23ffffff' d='M6 8a3.5 3.5 0 100-7 3.5 3.5 0 000 7zm5.5 6.5c0-2.5-2.462-4.5-5.5-4.5S.5 12 .5 14.5V15h11v-.5zM12.5 6a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm.276 2.03A4.517 4.517 0 0112.5 8c-.55 0-1.08.09-1.575.257C12.15 9.1 13 10.68 13 12.5v.5h3v-.4c0-2.16-1.42-3.86-3.224-4.57z'/%3e%3c/svg%3e");
+}
+
+.toolbar-bar .toolbar-icon-gg-members:active::before,
+.toolbar-bar .toolbar-icon-gg-members.is-active::before {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3e%3cpath fill='%23ffffff' d='M6 8a3.5 3.5 0 100-7 3.5 3.5 0 000 7zm5.5 6.5c0-2.5-2.462-4.5-5.5-4.5S.5 12 .5 14.5V15h11v-.5zM12.5 6a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm.276 2.03A4.517 4.517 0 0112.5 8c-.55 0-1.08.09-1.575.257C12.15 9.1 13 10.68 13 12.5v.5h3v-.4c0-2.16-1.42-3.86-3.224-4.57z'/%3e%3c/svg%3e");
+}
+
+/* Per-file delete button next to each uploaded doctor-note/photo/birth-
+   certificate file (see js/file-delete.js — it drives the real checkbox
+   + "Remove selected" button underneath, just hidden). The core "Remove
+   selected" button itself is redundant now that every file has its own
+   delete button, but file-delete.js still needs it in the DOM (it clicks
+   it programmatically) — so hide it visually, don't remove it. */
+.gg-members-fieldset input[type="submit"][name$="_remove_button"] {
+  display: none;
+}
+
+.gg-members-file-checkbox-hidden {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gg-members-file-delete {
+  margin-left: 10px;
+  padding: 2px 10px;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gg-members-file-delete:hover {
+  background: #fecaca;
+}
+
+/* Settings page: the 12 month checkboxes as a grid of toggle chips (6 per
+   row) instead of a long list. The checkbox is hidden; its label is the
+   chip, filled in while the month is ticked. */
+.gg-members-month-chips .form-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 880px;
+  /* Padding, not a margin on the heading: browsers ignore margins on a
+     fieldset's <legend>. */
+  padding-top: 12px;
+}
+
+/* Breathing room around the chips: the "Για όλες τις τάξεις" heading above
+   (padding on the grid, see above) and the help text below. */
+.gg-members-month-chips .fieldset__label--group {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+.gg-members-month-chips .fieldset__description,
+.gg-members-month-chips .form-item__description {
+  margin-top: 14px;
+  max-width: 880px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+/* Settings page, per-class overrides: one card per class with a toggle
+   switch; the class's own months open up inside the card while it's on. */
+.gg-members-class-override {
+  margin: 0 0 12px;
+  padding: 14px 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fafafa;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.gg-members-class-override:has(.gg-members-class-override__toggle input:checked) {
+  border-color: #bfdbfe;
+  background: #f8fbff;
+}
+
+.gg-members-class-override .gg-members-month-chips > .form-item,
+.gg-members-class-override .gg-members-month-chips > fieldset {
+  margin: 16px 0 2px;
+}
+
+.gg-members-class-override .gg-members-class-override__toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+}
+
+.gg-members-class-override .gg-members-class-override__toggle input.form-boolean--type-checkbox {
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 40px;
+  height: 22px;
+  margin: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #d1d5db;
+  background-image: none;
+  box-shadow: none;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.gg-members-class-override .gg-members-class-override__toggle input.form-boolean--type-checkbox::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s;
+}
+
+.gg-members-class-override .gg-members-class-override__toggle input.form-boolean--type-checkbox:hover {
+  background-color: #9ca3af;
+  box-shadow: none;
+}
+
+.gg-members-class-override .gg-members-class-override__toggle input.form-boolean--type-checkbox:checked {
+  background-color: #1d4ed8;
+  background-image: none;
+}
+
+.gg-members-class-override .gg-members-class-override__toggle input.form-boolean--type-checkbox:checked:hover {
+  background-color: #1e40af;
+}
+
+.gg-members-class-override .gg-members-class-override__toggle input.form-boolean--type-checkbox:checked::before {
+  transform: translateX(18px);
+}
+
+.gg-members-class-override .gg-members-class-override__toggle input.form-boolean--type-checkbox:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+.gg-members-class-override .gg-members-class-override__toggle label.option {
+  margin: 0;
+  padding: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #111827;
+  cursor: pointer;
+}
+
+.gg-members-month-chips .form-checkboxes .form-item {
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+
+.gg-members-month-chips .form-checkboxes input.form-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+
+.gg-members-month-chips .form-checkboxes label.option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 40px;
+  margin: 0;
+  padding: 0 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 0.9rem;
+  color: #374151;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.gg-members-month-chips .form-checkboxes label.option:hover {
+  border-color: #60a5fa;
+  background: #f0f7ff;
+  color: #1d4ed8;
+  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.15);
+  transform: translateY(-1px);
+}
+
+.gg-members-month-chips .form-checkboxes input:checked + label.option {
+  border-color: #1d4ed8;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.gg-members-month-chips .form-checkboxes input:checked + label.option:hover {
+  background: #dbeafe;
+}
+
+.gg-members-month-chips .form-checkboxes input:checked + label.option::before {
+  content: '✓';
+  font-weight: 700;
+}
+
+.gg-members-month-chips .form-checkboxes input:focus-visible + label.option {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .gg-members-month-chips .form-checkboxes {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .gg-members-month-chips .form-checkboxes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -1,0 +1,67 @@
+gg_members.dashboard:
+  path: '/admin/members'
+  defaults:
+    _controller: '\Drupal\gg_members\Controller\MemberDashboardController::list'
+    _title: 'Μέλη'
+  requirements:
+    _permission: 'administer gg_members'
+
+gg_members.member_add:
+  path: '/admin/members/add'
+  defaults:
+    _form: '\Drupal\gg_members\Form\MemberForm'
+    _title: 'Νέο μέλος'
+  requirements:
+    _permission: 'administer gg_members'
+
+gg_members.settings:
+  path: '/admin/members/settings'
+  defaults:
+    _form: '\Drupal\gg_members\Form\SettingsForm'
+    _title: 'Ρυθμίσεις μελών'
+  requirements:
+    _permission: 'administer gg_members'
+
+gg_members.member_view:
+  path: '/admin/members/{member}'
+  defaults:
+    _controller: '\Drupal\gg_members\Controller\MemberProfileController::view'
+    _title_callback: '\Drupal\gg_members\Controller\MemberProfileController::title'
+  requirements:
+    _permission: 'administer gg_members'
+    member: \d+
+
+gg_members.member_edit:
+  path: '/admin/members/{member}/edit'
+  defaults:
+    _form: '\Drupal\gg_members\Form\MemberForm'
+    _title: 'Επεξεργασία μέλους'
+  requirements:
+    _permission: 'administer gg_members'
+    member: \d+
+
+gg_members.member_delete:
+  path: '/admin/members/{member}/delete'
+  defaults:
+    _form: '\Drupal\gg_members\Form\DeleteMemberForm'
+    _title: 'Διαγραφή μέλους'
+  requirements:
+    _permission: 'administer gg_members'
+    member: \d+
+
+gg_members.export:
+  path: '/admin/members/export'
+  defaults:
+    _controller: '\Drupal\gg_members\Controller\MemberExportController::export'
+    _title: 'Εξαγωγή μελών'
+  requirements:
+    _permission: 'administer gg_members'
+
+gg_members.payments:
+  path: '/admin/members/{member}/payments'
+  defaults:
+    _form: '\Drupal\gg_members\Form\PaymentForm'
+    _title_callback: '\Drupal\gg_members\Form\PaymentForm::title'
+  requirements:
+    _permission: 'administer gg_members'
+    member: \d+

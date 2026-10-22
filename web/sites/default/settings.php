@@ -902,6 +902,11 @@ if (file_exists($app_root . '/' . $site_path . '/settings.local.php')) {
   include $app_root . '/' . $site_path . '/settings.local.php';
 }
 
+// Member documents (doctor's notes, ΑΜΚΑ, birth certificates) live here,
+// outside the web root so they're never reachable by URL. Kept out of git.
+// settings.hostinger.php below can point it elsewhere on the server.
+$settings['file_private_path'] = $app_root . '/../private';
+
 if (file_exists($app_root . '/' . $site_path . '/settings.hostinger.php')) {
   include $app_root . '/' . $site_path . '/settings.hostinger.php';
 }

@@ -1,0 +1,4 @@
+administer gg_members:
+  title: 'Administer GG Members'
+  description: 'Manage the member roster, classes, and payment history.'
+  restrict access: true
