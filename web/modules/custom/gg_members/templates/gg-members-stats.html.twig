@@ -1,0 +1,188 @@
+{#
+/**
+ * @file
+ * Statistics page for the GG Members module.
+ *
+ * Available variables:
+ * - basics: see MemberStats::basics() — total, average, open_months,
+ *   closed_months, from, to.
+ * - monthly: see MemberStats::monthly() — months (label, name, year, amount,
+ *   percent, closed, current, best), best_amount.
+ * - by_class: see MemberStats::byClass() — total, members, and classes (name,
+ *   color, revenue, revenue_percent, members, members_percent, average).
+ * - members: see MemberStats::members() — active, active_year_ago, joined,
+ *   left, tenure, and classes (name, color, active, active_percent, joined,
+ *   left, age, tenure).
+ */
+#}
+{# lang="el" so text-transform: uppercase drops the accents. #}
+<div class="gg-members-admin gg-members-statspage" lang="el">
+  <div class="gg-members-actions">
+    <a href="{{ path('gg_members.dashboard') }}" class="button">{{ '← Όλα τα μέλη'|t }}</a>
+  </div>
+
+  <div class="gg-members-stats gg-members-stats--big">
+    <div class="gg-members-stat">
+      <span class="gg-members-stat__value">{{ basics.average|number_format(2, ',', '.') }}€</span>
+      <span class="gg-members-stat__label">{{ 'Μέσος όρος εσόδων / μήνα'|t }}</span>
+      <span class="gg-members-stat__sub">
+        {% if basics.closed_months %}
+          {{ 'Από τους @count μήνες λειτουργίας του τελευταίου χρόνου (χωρίς τους κλειστούς μήνες).'|t({'@count': basics.open_months}) }}
+        {% else %}
+          {{ 'Από τους τελευταίους 12 μήνες.'|t }}
+        {% endif %}
+      </span>
+    </div>
+    <div class="gg-members-stat">
+      <span class="gg-members-stat__value">{{ basics.total|number_format(2, ',', '.') }}€</span>
+      <span class="gg-members-stat__label">{{ 'Έσοδα τελευταίου χρόνου'|t }}</span>
+      <span class="gg-members-stat__sub">{{ 'Όσα πληρώθηκαν από τον @from έως τον @to.'|t({'@from': basics.from, '@to': basics.to}) }}</span>
+    </div>
+  </div>
+
+  <section class="gg-members-monthly">
+    <header class="gg-members-section-header">
+      <h2>{{ 'Έσοδα ανά μήνα'|t }}</h2>
+      <p>{{ 'Πόσα πληρώθηκαν κάθε μήνα τον τελευταίο χρόνο.'|t }}</p>
+    </header>
+    <div class="gg-members-card gg-members-monthly__card">
+      <ol class="gg-members-monthly__months">
+        {% for month in monthly.months %}
+          {% set classes = [
+            'gg-members-monthly__month',
+            month.best ? 'is-best',
+            month.current ? 'is-current',
+            month.closed ? 'is-closed',
+          ] %}
+          <li class="{{ classes|filter(c => c)|join(' ') }}" style="--pct: {{ month.percent }}" title="{{ month.name }}: {{ month.amount|number_format(2, ',', '.') }}€">
+            <span class="gg-members-monthly__amount">
+              {% if month.closed %}
+                {{ 'κλειστό'|t }}
+              {% else %}
+                {{ month.amount|number_format(0, ',', '.') }}€
+              {% endif %}
+            </span>
+            <span class="gg-members-monthly__track" aria-hidden="true"><span class="gg-members-monthly__bar"></span></span>
+            <span class="gg-members-monthly__label">
+              {{ month.label }} <span class="gg-members-monthly__year">{{ month.year|slice(2) }}</span>
+              {% if month.best %}<span class="gg-members-monthly__tag">{{ 'καλύτερος'|t }}</span>{% endif %}
+              {% if month.current %}<span class="gg-members-monthly__tag gg-members-monthly__tag--current">{{ 'μέχρι σήμερα'|t }}</span>{% endif %}
+            </span>
+          </li>
+        {% endfor %}
+      </ol>
+    </div>
+  </section>
+
+  {% if by_class.classes %}
+    <section class="gg-members-by-class">
+      <header class="gg-members-section-header">
+        <h2>{{ 'Ανά τμήμα'|t }}</h2>
+        <p>{{ 'Πόσα από τα έσοδα του τελευταίου χρόνου έφερε κάθε τμήμα, και πόσα από τα ενεργά μέλη έχει.'|t }}</p>
+      </header>
+      <div class="gg-members-class-grid">
+        {% for class in by_class.classes %}
+          <div class="gg-members-card gg-members-class-card" style="--class-color: {{ class.color }}">
+            <div class="gg-members-class-card__head">
+              <h3 class="gg-members-class-card__name">{{ class.name }}</h3>
+              <span class="gg-members-class-card__percent">{{ class.revenue_percent }}%</span>
+            </div>
+            <div class="gg-members-class-card__amount">{{ class.revenue|number_format(2, ',', '.') }}€</div>
+            <div class="gg-members-class-card__caption">{{ 'του συνόλου των εσόδων'|t }}</div>
+            <span class="gg-members-progress gg-members-class-card__bar" aria-hidden="true"><span class="gg-members-progress__bar" style="width: {{ class.revenue_percent }}%"></span></span>
+            <dl class="gg-members-class-card__facts">
+              <div>
+                <dt>{{ 'Μέλη'|t }}</dt>
+                <dd>{{ class.members }} <span>({{ class.members_percent }}%)</span></dd>
+              </div>
+              <div>
+                <dt>{{ 'Μέσος όρος / μήνα'|t }}</dt>
+                <dd>{{ class.average|number_format(2, ',', '.') }}€</dd>
+              </div>
+            </dl>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="gg-members-people">
+    <header class="gg-members-section-header">
+      <h2>{{ 'Μέλη'|t }}</h2>
+      <p>{{ 'Πόσα μέλη έχετε, πόσα ήρθαν και πόσα έφυγαν τον τελευταίο χρόνο.'|t }}</p>
+    </header>
+    <div class="gg-members-stats">
+      <div class="gg-members-stat">
+        <span class="gg-members-stat__value">{{ members.active }}</span>
+        <span class="gg-members-stat__label">{{ 'Ενεργά μέλη'|t }}</span>
+        <span class="gg-members-stat__sub">{{ 'πριν από έναν χρόνο: @count'|t({'@count': members.active_year_ago}) }}</span>
+      </div>
+      <div class="gg-members-stat">
+        <span class="gg-members-stat__value gg-members-stat__value--up">+{{ members.joined }}</span>
+        <span class="gg-members-stat__label">{{ 'Ήρθαν'|t }}</span>
+        <span class="gg-members-stat__sub">{{ 'νέες εγγραφές τον τελευταίο χρόνο'|t }}</span>
+      </div>
+      <div class="gg-members-stat">
+        <span class="gg-members-stat__value gg-members-stat__value--down">−{{ members.left }}</span>
+        <span class="gg-members-stat__label">{{ 'Έφυγαν'|t }}</span>
+        <span class="gg-members-stat__sub">{{ 'αποχωρήσεις τον τελευταίο χρόνο'|t }}</span>
+      </div>
+      <div class="gg-members-stat">
+        <span class="gg-members-stat__value">{{ members.tenure ?? '—' }} <span class="gg-members-stat__of">{{ 'μήνες'|t }}</span></span>
+        <span class="gg-members-stat__label">{{ 'Μέση παραμονή'|t }}</span>
+        <span class="gg-members-stat__sub">{{ 'πόσο μένει κατά μέσο όρο ένα μέλος'|t }}</span>
+      </div>
+    </div>
+
+    {% if members.classes %}
+      {% set largest = max(members.classes|column('active')|merge([1])) %}
+      <h3 class="gg-members-subsection-title">{{ 'Μέλη ανά τάξη'|t }}</h3>
+      <div class="gg-members-card gg-members-people-table">
+        <table>
+          <thead>
+            <tr>
+              <th>{{ 'Τάξη'|t }}</th>
+              <th>{{ 'Ενεργά μέλη'|t }}</th>
+              <th>{{ 'Ήρθαν / Έφυγαν'|t }}</th>
+              <th>{{ 'Μεταβολή'|t }}</th>
+              <th>{{ 'Μέση ηλικία'|t }}</th>
+              <th>{{ 'Μέση παραμονή'|t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for class in members.classes %}
+              {% set change = class.joined - class.left %}
+              <tr style="--class-color: {{ class.color }}">
+                <td class="gg-members-people-table__name">{{ class.name }}</td>
+                <td data-label="{{ 'Ενεργά μέλη'|t }}">
+                  <div class="gg-members-people-table__active">
+                    <span class="gg-members-people-table__track" aria-hidden="true"><span style="width: {{ (class.active / largest * 100)|round(1) }}%"></span></span>
+                    <strong>{{ class.active }}</strong>
+                    <span class="gg-members-people-table__muted">{{ class.active_percent }}%</span>
+                  </div>
+                </td>
+                <td data-label="{{ 'Ήρθαν / Έφυγαν'|t }}">
+                  <span class="gg-members-people-table__pills">
+                    <span class="gg-members-pill gg-members-pill--up" title="{{ 'Ήρθαν'|t }}">+{{ class.joined }}</span>
+                    <span class="gg-members-pill gg-members-pill--down" title="{{ 'Έφυγαν'|t }}">−{{ class.left }}</span>
+                  </span>
+                </td>
+                <td data-label="{{ 'Μεταβολή'|t }}">
+                  {% if change > 0 %}
+                    <span class="gg-members-people-table__change is-up">▲ +{{ change }}</span>
+                  {% elseif change < 0 %}
+                    <span class="gg-members-people-table__change is-down">▼ −{{ -change }}</span>
+                  {% else %}
+                    <span class="gg-members-people-table__change">— 0</span>
+                  {% endif %}
+                </td>
+                <td data-label="{{ 'Μέση ηλικία'|t }}">{{ class.age is not null ? '@age ετών'|t({'@age': class.age}) : '—' }}</td>
+                <td data-label="{{ 'Μέση παραμονή'|t }}">{{ class.tenure is not null ? '@count μήνες'|t({'@count': class.tenure}) : '—' }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  </section>
+</div>

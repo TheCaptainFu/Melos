@@ -14,6 +14,14 @@ gg_members.member_add:
   requirements:
     _permission: 'administer gg_members'
 
+gg_members.stats:
+  path: '/admin/members/stats'
+  defaults:
+    _controller: '\Drupal\gg_members\Controller\MemberStatsController::page'
+    _title: 'Στατιστικά'
+  requirements:
+    _permission: 'administer gg_members'
+
 gg_members.settings:
   path: '/admin/members/settings'
   defaults:

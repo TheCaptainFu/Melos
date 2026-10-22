@@ -7,3 +7,9 @@ services:
       - '@datetime.time'
       - '@file.usage'
       - '@config.factory'
+  gg_members.stats:
+    class: Drupal\gg_members\MemberStats
+    arguments:
+      - '@database'
+      - '@config.factory'
+      - '@gg_members.manager'

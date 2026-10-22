@@ -898,3 +898,519 @@ a.gg-members-badge--owes:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* ------------------------------------------------------------------------
+   Statistics page.
+   ------------------------------------------------------------------------ */
+
+.gg-members-actions .gg-members-stats-link {
+  border-color: #c4b5fd;
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+/* The headline numbers: big, one idea per card, a short line of context
+   underneath. */
+.gg-members-stats--big .gg-members-stat {
+  flex: 1 1 260px;
+  padding: 22px 26px;
+  gap: 6px;
+}
+
+.gg-members-stats--big .gg-members-stat__value {
+  font-size: 2.1rem;
+  line-height: 1.1;
+}
+
+.gg-members-stats--big .gg-members-stat__label {
+  order: -1;
+  font-size: 0.8rem;
+}
+
+.gg-members-stat__sub {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+/* Per class: one card per class, side by side — as many columns as there
+   are classes while they fit (at least 210px each), wrapping on narrower
+   screens. Each card is marked with its class colour. */
+.gg-members-by-class {
+  margin-top: 28px;
+}
+
+.gg-members-section-header h2 {
+  margin: 0 0 4px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.gg-members-section-header p {
+  margin: 0 0 16px;
+  font-size: 0.88rem;
+  color: #6b7280;
+}
+
+.gg-members-class-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
+}
+
+.gg-members-class-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 20px 22px 18px;
+  overflow: hidden;
+}
+
+/* The class colour as a strip along the top of its card. */
+.gg-members-class-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 4px;
+  background: var(--class-color);
+}
+
+.gg-members-class-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.gg-members-class-card__name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.gg-members-class-card__percent {
+  flex: none;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--class-color) 12%, #fff);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--class-color);
+}
+
+.gg-members-class-card__amount {
+  margin-top: 14px;
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #111827;
+}
+
+.gg-members-class-card__caption {
+  margin-top: 2px;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.gg-members-class-card__bar {
+  height: 6px;
+  margin-top: 12px;
+}
+
+.gg-members-class-card__bar .gg-members-progress__bar {
+  background: var(--class-color);
+}
+
+.gg-members-class-card__facts {
+  margin: 16px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid #f0f1f3;
+}
+
+/* One fact per line: label on the left, number on the right. */
+.gg-members-class-card__facts > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.gg-members-class-card__facts dt {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.gg-members-class-card__facts dd {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111827;
+  white-space: nowrap;
+}
+
+.gg-members-class-card__facts dd span {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+/* Monthly income: one column per month, its height relative to the best
+   month (--pct). The best month is highlighted; this month, still filling
+   up, is paler; closed months say so. On phones the columns turn into
+   horizontal bars, one month per line. */
+.gg-members-monthly {
+  margin-top: 28px;
+}
+
+.gg-members-monthly__card {
+  margin: 0;
+  padding: 24px 24px 18px;
+}
+
+.gg-members-monthly__months {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gg-members-monthly__month {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  min-width: 0;
+}
+
+.gg-members-monthly__amount {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.gg-members-monthly__track {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  max-width: 56px;
+  height: 180px;
+  border-radius: 8px;
+  background: #f5f6f8;
+}
+
+.gg-members-monthly__bar {
+  display: block;
+  width: 100%;
+  height: calc(var(--pct) * 1%);
+  min-height: 3px;
+  border-radius: 8px;
+  background: #86c9a0;
+  transition: background-color 0.15s;
+}
+
+.gg-members-monthly__month:hover .gg-members-monthly__bar {
+  background: #4fae74;
+}
+
+.gg-members-monthly__label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #111827;
+  text-align: center;
+}
+
+.gg-members-monthly__year {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #9ca3af;
+}
+
+.gg-members-monthly__tag {
+  margin-top: 2px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #dcfce7;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #15803d;
+  white-space: nowrap;
+}
+
+.gg-members-monthly__tag--current {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.gg-members-monthly__month.is-best .gg-members-monthly__bar {
+  background: #16a34a;
+}
+
+.gg-members-monthly__month.is-best .gg-members-monthly__amount {
+  color: #15803d;
+}
+
+/* Still filling up: striped, so it doesn't read as a bad month. */
+.gg-members-monthly__month.is-current .gg-members-monthly__bar {
+  background: repeating-linear-gradient(-45deg, #86c9a0 0 6px, #b7e0c5 6px 12px);
+}
+
+.gg-members-monthly__month.is-closed .gg-members-monthly__amount {
+  font-weight: 500;
+  color: #9ca3af;
+}
+
+.gg-members-monthly__month.is-closed .gg-members-monthly__track {
+  background: repeating-linear-gradient(-45deg, #f5f6f8 0 6px, #eceef1 6px 12px);
+}
+
+.gg-members-monthly__month.is-closed .gg-members-monthly__bar {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .gg-members-monthly__months {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .gg-members-monthly__month {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr) 72px;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .gg-members-monthly__label {
+    grid-column: 1;
+    grid-row: 1;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .gg-members-monthly__track {
+    grid-column: 2;
+    grid-row: 1;
+    max-width: none;
+    height: 14px;
+  }
+
+  .gg-members-monthly__bar {
+    width: calc(var(--pct) * 1%);
+    height: 100%;
+    min-width: 3px;
+  }
+
+  .gg-members-monthly__amount {
+    grid-column: 3;
+    grid-row: 1;
+    text-align: right;
+  }
+}
+
+/* Members: whole-academy cards, then one card per class. */
+.gg-members-people {
+  margin-top: 28px;
+}
+
+.gg-members-stat__value--up {
+  color: #15803d;
+}
+
+.gg-members-stat__value--down {
+  color: #b91c1c;
+}
+
+.gg-members-subsection-title {
+  margin: 20px 0 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+/* Members per class: a list-like table, one class per row — a bar of its
+   active members (the largest class fills it), joined/left pills, the net
+   change and averages. On phones each row becomes a small labelled block. */
+.gg-members-people-table {
+  margin: 0;
+  padding: 6px 22px;
+}
+
+.gg-members-people-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.gg-members-people-table th {
+  padding: 12px 10px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.gg-members-people-table td {
+  padding: 14px 10px;
+  border-bottom: 1px solid #f0f1f3;
+  font-size: 0.95rem;
+  color: #111827;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.gg-members-people-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.gg-members-people-table__name {
+  font-weight: 700;
+}
+
+.gg-members-people-table__name::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 10px;
+  border-radius: 50%;
+  background: var(--class-color);
+  vertical-align: 1px;
+}
+
+.gg-members-people-table__active {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 220px;
+}
+
+.gg-members-people-table__track {
+  flex: 1;
+  max-width: 260px;
+  height: 10px;
+  border-radius: 999px;
+  background: #f0f1f3;
+  overflow: hidden;
+}
+
+.gg-members-people-table__track span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--class-color);
+}
+
+.gg-members-people-table__active strong {
+  min-width: 24px;
+  text-align: right;
+}
+
+.gg-members-people-table__muted {
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.gg-members-pill {
+  display: inline-block;
+  min-width: 40px;
+  margin-right: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.gg-members-pill--up {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.gg-members-pill--down {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.gg-members-people-table__change {
+  font-weight: 700;
+  color: #6b7280;
+}
+
+.gg-members-people-table__change.is-up {
+  color: #15803d;
+}
+
+.gg-members-people-table__change.is-down {
+  color: #b91c1c;
+}
+
+@media (max-width: 760px) {
+  .gg-members-people-table {
+    padding: 0 16px;
+  }
+
+  .gg-members-people-table thead {
+    display: none;
+  }
+
+  .gg-members-people-table tr {
+    display: block;
+    padding: 14px 0;
+    border-bottom: 1px solid #f0f1f3;
+  }
+
+  .gg-members-people-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  /* height: auto undoes Claro's fixed table-cell height. */
+  .gg-members-people-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    height: auto;
+    padding: 5px 0;
+    border: none;
+  }
+
+  .gg-members-people-table td[data-label]::before {
+    content: attr(data-label);
+    font-size: 0.85rem;
+    color: #6b7280;
+  }
+
+  .gg-members-people-table td.gg-members-people-table__name {
+    justify-content: flex-start;
+    gap: 0;
+    margin-bottom: 4px;
+    font-size: 1.02rem;
+  }
+
+  .gg-members-people-table__active {
+    min-width: 0;
+    flex: 1;
+    justify-content: flex-end;
+  }
+
+  .gg-members-people-table__track {
+    max-width: 120px;
+  }
+}

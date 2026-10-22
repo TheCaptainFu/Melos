@@ -82,6 +82,15 @@ function gg_members_theme() {
         'pager' => NULL,
       ],
     ],
+    'gg_members_stats' => [
+      'template' => 'gg-members-stats',
+      'variables' => [
+        'basics' => [],
+        'monthly' => [],
+        'by_class' => [],
+        'members' => [],
+      ],
+    ],
     'gg_members_profile' => [
       'template' => 'gg-members-profile',
       'variables' => [
