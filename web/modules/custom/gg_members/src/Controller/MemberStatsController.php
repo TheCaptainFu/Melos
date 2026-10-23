@@ -18,12 +18,15 @@ class MemberStatsController extends ControllerBase {
   }
 
   public function page(): array {
+    $history = $this->memberStats->history();
+
     return [
       '#theme' => 'gg_members_stats',
-      '#basics' => $this->memberStats->basics(),
-      '#monthly' => $this->memberStats->monthly(),
-      '#by_class' => $this->memberStats->byClass(),
-      '#members' => $this->memberStats->members(),
+      '#history' => $history,
+      '#basics' => $this->memberStats->basics($history),
+      '#monthly' => $this->memberStats->monthly($history),
+      '#by_class' => $this->memberStats->byClass($history),
+      '#members' => $this->memberStats->members($history),
       '#attached' => ['library' => ['gg_members/admin']],
       '#cache' => ['max-age' => 0],
     ];

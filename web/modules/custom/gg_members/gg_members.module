@@ -85,6 +85,7 @@ function gg_members_theme() {
     'gg_members_stats' => [
       'template' => 'gg-members-stats',
       'variables' => [
+        'history' => [],
         'basics' => [],
         'monthly' => [],
         'by_class' => [],

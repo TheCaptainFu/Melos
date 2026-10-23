@@ -28,13 +28,45 @@ class MemberStats {
   ) {}
 
   /**
-   * The headline numbers: money actually received over the last 12 months
-   * (by payment date, this month included), and what that makes per month
-   * the academy was open.
+   * Where the numbers start: the last 12 months, or less if the module has
+   * only been in use for a shorter time (its first recorded payment) —
+   * months before that hold no data, not zero income.
+   *
+   * @return array
+   *   'months': the first day of each month shown, oldest first, this month
+   *   included; 'partial': TRUE if that's less than a full year of history;
+   *   'empty': TRUE if there are no payments at all; 'from' and 'to': the
+   *   first and last month, accusative ("Σεπτέμβριο 2026").
    */
-  public function basics(): array {
-    $months = $this->lastYearMonths();
-    $end = end($months);
+  public function history(): array {
+    $end = new \DateTimeImmutable('first day of this month');
+    $yearStart = $end->modify('-11 months');
+    $firstPayment = $this->database->query('SELECT MIN(payment_date) FROM {gg_members_payment}')->fetchField();
+    $dataStart = $firstPayment ? (new \DateTimeImmutable($firstPayment))->modify('first day of this month') : $end;
+    $start = max($yearStart, $dataStart);
+
+    $months = [];
+    for ($cursor = $start; $cursor <= $end; $cursor = $cursor->modify('+1 month')) {
+      $months[] = $cursor;
+    }
+
+    return [
+      'months' => $months,
+      'partial' => $start > $yearStart,
+      'empty' => !$firstPayment,
+      'from' => $this->monthAccusative($start),
+      'to' => $this->monthAccusative($end),
+    ];
+  }
+
+  /**
+   * The headline numbers: money actually received over the period (by
+   * payment date, this month included), and the average per month the
+   * academy was open — over complete months only, since this one is still
+   * filling up.
+   */
+  public function basics(array $history): array {
+    $months = $history['months'];
 
     $total = (float) $this->database->query(
       'SELECT COALESCE(SUM(amount), 0) FROM {gg_members_payment} WHERE payment_date >= :start',
@@ -44,21 +76,42 @@ class MemberStats {
     // Months the academy is closed (summer) bring nothing in by design, so
     // they'd only drag the average down; it's per month of operation.
     $freeMonths = array_map('intval', $this->configFactory->get('gg_members.settings')->get('free_months') ?? []);
-    $openMonths = $this->countOpenMonths($months, $freeMonths);
+    [$completeTotal, $completeMonths] = $this->completeMonths($months, $freeMonths);
 
     return [
       'total' => $total,
-      'average' => $openMonths ? $total / $openMonths : 0.0,
-      'open_months' => $openMonths,
-      'closed_months' => 12 - $openMonths,
-      'from' => $this->monthAccusative($months[0]),
-      'to' => $this->monthAccusative($end),
+      'average' => $completeMonths ? $completeTotal / $completeMonths : $total,
+      'average_months' => $completeMonths,
+      'closed_months' => count($months) - $this->countOpenMonths($months, $freeMonths),
     ];
   }
 
   /**
-   * The same last-year income month by month (by payment date), for the
-   * monthly columns.
+   * Income from the complete months of a period that weren't closed months
+   * (this month, still filling up, left out), and how many such months.
+   *
+   * @return array
+   *   [total, number of months].
+   */
+  protected function completeMonths(array $months, array $freeMonths, ?int $classTid = NULL): array {
+    $complete = array_filter(array_slice($months, 0, -1), fn(\DateTimeImmutable $month) => !in_array((int) $month->format('n'), $freeMonths, TRUE));
+    if (!$complete) {
+      return [0.0, 0];
+    }
+    $query = $this->database->select('gg_members_payment', 'p');
+    $query->addExpression('COALESCE(SUM(p.amount), 0)', 'total');
+    $query->condition('p.payment_date', $months[0]->format('Y-m-d'), '>=');
+    $query->condition('p.payment_date', end($months)->format('Y-m-d'), '<');
+    if ($classTid) {
+      $query->join('gg_members_member', 'm', 'm.id = p.member_id');
+      $query->condition('m.class_tid', $classTid);
+    }
+    return [(float) $query->execute()->fetchField(), count($complete)];
+  }
+
+  /**
+   * The same income month by month (by payment date), for the monthly
+   * columns — only the months there's data for.
    *
    * @return array
    *   'months': one entry per month, oldest first — label, year, amount,
@@ -66,8 +119,8 @@ class MemberStats {
    *   the academy doesn't charge, with nothing in), current (this month, so
    *   still filling up), best (the highest complete month); 'best_amount'.
    */
-  public function monthly(): array {
-    $months = $this->lastYearMonths();
+  public function monthly(array $history): array {
+    $months = $history['months'];
     $amounts = $this->database->query(
       'SELECT SUBSTRING(payment_date, 1, 7), SUM(amount) FROM {gg_members_payment} WHERE payment_date >= :start GROUP BY SUBSTRING(payment_date, 1, 7)',
       [':start' => $months[0]->format('Y-m-d')]
@@ -99,16 +152,17 @@ class MemberStats {
   }
 
   /**
-   * The same last-year income split by class: each class's share of the
-   * money (by the paying member's class) and of the active members.
+   * The same income split by class: each class's share of the money (by
+   * the paying member's class) and of the active members.
    *
    * @return array
    *   'total' and 'members' (whole academy), and 'classes': one entry per
    *   class in class order — name, color, revenue, revenue_percent,
-   *   members, members_percent, average (per month the class was open).
+   *   members, members_percent, average (per complete month the class was
+   *   open).
    */
-  public function byClass(): array {
-    $months = $this->lastYearMonths();
+  public function byClass(array $history): array {
+    $months = $history['months'];
 
     $revenue = $this->database->query(
       'SELECT m.class_tid, SUM(p.amount) FROM {gg_members_payment} p INNER JOIN {gg_members_member} m ON m.id = p.member_id WHERE p.payment_date >= :start GROUP BY m.class_tid',
@@ -134,9 +188,9 @@ class MemberStats {
     $classes = [];
     $index = 0;
     foreach ($terms as $tid => $term) {
-      // Per month this class was open (classes can have their own closed
-      // months, see the settings page).
-      $openMonths = $this->countOpenMonths($months, $this->memberManager->getFreeMonths((int) $tid));
+      // Per complete month this class was open (classes can have their own
+      // closed months, see the settings page).
+      [$completeTotal, $completeMonths] = $this->completeMonths($months, $this->memberManager->getFreeMonths((int) $tid), (int) $tid);
       $classes[] = [
         'name' => $term->label(),
         'color' => self::CLASS_COLORS[$index++ % count(self::CLASS_COLORS)],
@@ -144,7 +198,7 @@ class MemberStats {
         'revenue_percent' => $revenuePercents[$tid],
         'members' => $classMembers[$tid],
         'members_percent' => $memberPercents[$tid],
-        'average' => $openMonths ? $classRevenue[$tid] / $openMonths : 0.0,
+        'average' => $completeMonths ? $completeTotal / $completeMonths : $classRevenue[$tid],
       ];
     }
 
@@ -156,19 +210,26 @@ class MemberStats {
   }
 
   /**
-   * Membership over the last year: who's active now, who joined, who left
-   * and how long people stay — for the whole academy and per class.
+   * Membership over the period: who's active now, who joined, who left and
+   * how long people stay — for the whole academy and per class.
+   *
+   * With less than a year of history, everyone was entered when the module
+   * was first used, so: joining counts only after that first month, and the
+   * year-ago count and the average stay (both meaningless then) are NULL.
+   * Members without an enrollment date never count as joined.
    *
    * @return array
-   *   Whole-academy 'active', 'active_year_ago', 'joined', 'left', 'tenure'
-   *   (average months a member stays: enrollment until leaving, or until
-   *   now), and 'classes': one entry per class in class order (same colours
-   *   as byClass()) — name, color, active, active_percent, joined, left,
-   *   age (average, active members), tenure.
+   *   Whole-academy 'active', 'active_year_ago', 'joined', 'joined_from'
+   *   (accusative month joins are counted from), 'left', 'tenure' (average
+   *   months a member stays: enrollment until leaving, or until now), and
+   *   'classes': one entry per class in class order (same colours as
+   *   byClass()) — name, color, active, active_percent, joined, left, age
+   *   (average, active members), tenure.
    */
-  public function members(): array {
-    $months = $this->lastYearMonths();
+  public function members(array $history): array {
+    $months = $history['months'];
     $start = $months[0]->format('Y-m');
+    $joinedFrom = $history['partial'] && count($months) > 1 ? $months[1] : $months[0];
     $currentMonth = end($months)->format('Y-m');
     $yearAgo = $months[0]->modify('-1 month')->format('Y-m');
     $today = new \DateTimeImmutable('today');
@@ -196,7 +257,10 @@ class MemberStats {
       if ($joinMonth <= $yearAgo && ($isActive || $leaveMonth >= $yearAgo)) {
         $totals['active_year_ago']++;
       }
-      if ($joinMonth >= $start) {
+      // Only members with a recorded enrollment date can be said to have
+      // joined in the period; without one, the fallback (when the record
+      // was created) is just when they were typed in.
+      if ($member->enrollment_date && $joinMonth >= $joinedFrom->format('Y-m') && !($history['partial'] && count($months) === 1)) {
         $totals['joined']++;
         $perClass[$tid]['joined']++;
       }
@@ -225,16 +289,17 @@ class MemberStats {
         'joined' => $class['joined'],
         'left' => $class['left'],
         'age' => $average($class['ages']),
-        'tenure' => $average($class['tenure']),
+        'tenure' => $history['partial'] ? NULL : $average($class['tenure']),
       ];
     }
 
     return [
       'active' => $totals['active'],
-      'active_year_ago' => $totals['active_year_ago'],
+      'active_year_ago' => $history['partial'] ? NULL : $totals['active_year_ago'],
       'joined' => $totals['joined'],
+      'joined_from' => $this->monthAccusative($joinedFrom),
       'left' => $totals['left'],
-      'tenure' => $average($totals['tenure']),
+      'tenure' => $history['partial'] ? NULL : $average($totals['tenure']),
       'classes' => $classes,
     ];
   }
@@ -276,21 +341,6 @@ class MemberStats {
       $percents[$key]++;
     }
     return $percents;
-  }
-
-  /**
-   * The last 12 months, this one included, oldest first.
-   *
-   * @return \DateTimeImmutable[]
-   *   The first day of each month.
-   */
-  protected function lastYearMonths(): array {
-    $months = [];
-    $end = new \DateTimeImmutable('first day of this month');
-    for ($cursor = $end->modify('-11 months'); $cursor <= $end; $cursor = $cursor->modify('+1 month')) {
-      $months[] = $cursor;
-    }
-    return $months;
   }
 
   /**
