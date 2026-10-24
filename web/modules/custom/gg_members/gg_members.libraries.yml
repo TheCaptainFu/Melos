@@ -7,7 +7,7 @@ remember_scroll:
     - core/once
 
 admin:
-  version: 1.0.51
+  version: 1.0.77
   css:
     theme:
       css/admin.css: {}
@@ -30,10 +30,34 @@ payment_form:
     - core/drupal
     - core/once
 
+stats_chart:
+  version: 1.0.0
+  js:
+    js/stats-chart.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+
 filter_autosubmit:
   version: 1.0.0
   js:
     js/filter-autosubmit.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+
+reminder:
+  version: 1.0.0
+  js:
+    js/reminder.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+
+settings_form:
+  version: 1.0.0
+  js:
+    js/settings-form.js: {}
   dependencies:
     - core/drupal
     - core/once

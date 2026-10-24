@@ -18,6 +18,9 @@
     <a href="{{ urls.back }}" class="button">{{ '← Όλα τα μέλη'|t }}</a>
     <a href="{{ urls.edit }}" class="button button--primary">{{ 'Επεξεργασία'|t }}</a>
     <a href="{{ urls.payments }}" class="button">{{ 'Πληρωμές'|t }}</a>
+    {% if finance.unpaid_months %}
+      <a href="{{ urls.reminder }}" class="button use-ajax gg-members-remind-button" data-dialog-type="modal" data-dialog-options='{"width":560,"dialogClass":"gg-members-reminder-dialog"}'>{{ 'Υπενθύμιση'|t }}</a>
+    {% endif %}
     <a href="{{ urls.delete }}" class="button button--danger gg-members-profile__delete">{{ 'Διαγραφή'|t }}</a>
   </div>
 

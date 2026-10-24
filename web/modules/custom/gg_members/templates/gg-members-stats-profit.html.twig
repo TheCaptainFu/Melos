@@ -1,0 +1,127 @@
+{#
+/**
+ * @file
+ * Statistics, profit: income and expenses together, in the same layout as
+ * the other two pages — two headline cards, one column per month (a loss in
+ * red), then where every 100€ that comes in goes.
+ *
+ * Available variables:
+ * - history: see MemberStats::buildHistory() — months, partial, empty, from,
+ *   to.
+ * - basics: see MemberStats::profitBasics() — income, expenses, profit,
+ *   average, average_months, expense_share.
+ * - monthly: see MemberStats::profitMonthly().
+ */
+#}
+{# lang="el" so text-transform: uppercase drops the accents. #}
+<div class="gg-members-admin gg-members-statspage" lang="el">
+  {% if history.single %}
+    {# One month picked: nothing year-based. #}
+  {% elseif history.empty %}
+    <div class="gg-members-notice">
+      <p>{{ 'Δεν υπάρχουν ακόμα πληρωμές ή έξοδα για να υπολογιστεί το κέρδος.'|t }}</p>
+    </div>
+  {% elseif history.partial %}
+    <div class="gg-members-notice">
+      <p>{{ 'Τα στοιχεία ξεκινούν από τον @from, όταν άρχισε να χρησιμοποιείται το πρόγραμμα. Όσο περνάει ο καιρός, τα στατιστικά θα γίνονται πιο πλήρη.'|t({'@from': history.from}) }}</p>
+    </div>
+  {% endif %}
+
+  {% set loss = basics.profit < 0 %}
+  {% if history.single %}
+    <div class="gg-members-stats gg-members-stats--big">
+      <div class="gg-members-stat gg-members-money__card gg-members-money__card--{{ loss ? 'loss' : 'profit' }}">
+        <span class="gg-members-stat__value">{{ loss ? '−' }}{{ basics.profit|abs|number_format(2, ',', '.') }}€</span>
+        <span class="gg-members-stat__label">{{ loss ? 'Ζημιά @month'|t({'@month': history.label}) : 'Κέρδος @month'|t({'@month': history.label}) }}</span>
+        <span class="gg-members-stat__sub">{{ 'έσοδα μείον έξοδα του μήνα'|t }}</span>
+      </div>
+      <div class="gg-members-stat">
+        <span class="gg-members-stat__value">
+          {{ basics.income|number_format(2, ',', '.') }}€
+          <span class="gg-members-stat__of">/ {{ basics.expenses|number_format(2, ',', '.') }}€</span>
+        </span>
+        <span class="gg-members-stat__label">{{ 'Έσοδα / Έξοδα'|t }}</span>
+        <span class="gg-members-stat__sub">{{ 'τι μπήκε και τι βγήκε τον @month'|t({'@month': history.from}) }}</span>
+      </div>
+    </div>
+  {% else %}
+  <div class="gg-members-stats gg-members-stats--big">
+    <div class="gg-members-stat gg-members-money__card gg-members-money__card--{{ basics.average < 0 ? 'loss' : 'profit' }}">
+      <span class="gg-members-stat__value">{{ basics.average < 0 ? '−' }}{{ basics.average|abs|number_format(2, ',', '.') }}€</span>
+      <span class="gg-members-stat__label">{{ basics.average < 0 ? 'Μέση ζημιά / μήνα'|t : 'Μέσο κέρδος / μήνα'|t }}</span>
+      <span class="gg-members-stat__sub">
+        {% if not basics.average_months %}
+          {{ 'Ο πρώτος μήνας δεν έχει ολοκληρωθεί ακόμα, οπότε είναι το αποτέλεσμα μέχρι σήμερα.'|t }}
+        {% elseif basics.average_months == 1 %}
+          {{ 'Από τον 1 ολοκληρωμένο μήνα.'|t }}
+        {% else %}
+          {{ 'Από τους @count ολοκληρωμένους μήνες, μαζί με τους κλειστούς.'|t({'@count': basics.average_months}) }}
+        {% endif %}
+      </span>
+    </div>
+    <div class="gg-members-stat gg-members-money__card gg-members-money__card--{{ loss ? 'loss' : 'profit' }}">
+      <span class="gg-members-stat__value">{{ loss ? '−' }}{{ basics.profit|abs|number_format(2, ',', '.') }}€</span>
+      <span class="gg-members-stat__label">
+        {% if history.partial %}
+          {{ loss ? 'Ζημιά μέχρι σήμερα'|t : 'Κέρδος μέχρι σήμερα'|t }}
+        {% else %}
+          {{ loss ? 'Ζημιά τελευταίου χρόνου'|t : 'Κέρδος τελευταίου χρόνου'|t }}
+        {% endif %}
+      </span>
+      <span class="gg-members-stat__sub">{{ 'Έσοδα @income€ μείον έξοδα @expenses€, από τον @from έως τον @to.'|t({
+        '@income': basics.income|number_format(2, ',', '.'),
+        '@expenses': basics.expenses|number_format(2, ',', '.'),
+        '@from': history.from,
+        '@to': history.to,
+      }) }}</span>
+    </div>
+  </div>
+
+  {% endif %}
+
+  {% include '@gg_members/gg-members-stats-monthly.html.twig' with {
+    monthly: monthly,
+    chart: chart,
+    title: 'Κέρδος ανά μήνα'|t,
+    subtitle: 'Έσοδα μείον έξοδα κάθε μήνα· με κόκκινο οι μήνες με ζημιά.'|t,
+    variant: 'profit',
+    best_label: 'καλύτερος'|t,
+  } only %}
+
+  {% if basics.expense_share is not null %}
+    <section class="gg-members-split">
+      <header class="gg-members-section-header">
+        <h2>{{ 'Πού πάνε τα έσοδα'|t }}</h2>
+        {% if loss %}
+          <p>{{ 'Τα έξοδα ξεπέρασαν τα έσοδα κατά @amount€.'|t({'@amount': basics.profit|abs|number_format(2, ',', '.')}) }}</p>
+        {% else %}
+          <p>{{ 'Από κάθε 100€ που μπαίνουν, τα @spent€ πάνε σε έξοδα και τα @kept€ μένουν κέρδος.'|t({'@spent': basics.expense_share, '@kept': 100 - basics.expense_share}) }}</p>
+        {% endif %}
+      </header>
+      <div class="gg-members-card gg-members-split__card">
+        {# The income as a pie: the slice that goes on expenses, and the
+           slice that's left. #}
+        <div class="gg-members-split__pie" style="--expenses: {{ basics.expense_share }}%" role="img" aria-label="{{ 'Έξοδα @spent%, κέρδος @kept%'|t({'@spent': basics.expense_share, '@kept': 100 - basics.expense_share}) }}"></div>
+        <div class="gg-members-split__legend">
+          <div class="gg-members-split__total">
+            <span>{{ 'Έσοδα'|t }}</span>
+            <strong>{{ basics.income|number_format(2, ',', '.') }}€</strong>
+            <em>100%</em>
+          </div>
+          <div>
+            <span class="gg-members-split__dot gg-members-split__dot--expenses"></span>
+            <span>{{ 'Έξοδα'|t }}</span>
+            <strong>{{ basics.expenses|number_format(2, ',', '.') }}€</strong>
+            <em>{{ basics.expense_share }}%</em>
+          </div>
+          <div>
+            <span class="gg-members-split__dot gg-members-split__dot--profit"></span>
+            <span>{{ loss ? 'Ζημιά'|t : 'Κέρδος'|t }}</span>
+            <strong>{{ loss ? '−' }}{{ basics.profit|abs|number_format(2, ',', '.') }}€</strong>
+            <em>{{ loss ? '—' : (100 - basics.expense_share) ~ '%' }}</em>
+          </div>
+        </div>
+      </div>
+    </section>
+  {% endif %}
+</div>

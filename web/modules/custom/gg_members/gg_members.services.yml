@@ -13,3 +13,19 @@ services:
       - '@database'
       - '@config.factory'
       - '@gg_members.manager'
+  gg_members.reminders:
+    class: Drupal\gg_members\MemberReminders
+    arguments:
+      - '@database'
+      - '@config.factory'
+      - '@gg_members.manager'
+      - '@datetime.time'
+      - '@current_user'
+  gg_members.expenses:
+    class: Drupal\gg_members\ExpenseManager
+    arguments:
+      - '@database'
+      - '@datetime.time'
+      - '@current_user'
+      - '@config.factory'
+      - '@lock'

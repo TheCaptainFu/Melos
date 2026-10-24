@@ -21,3 +21,9 @@ gg_members.settings:
             label: 'Calendar months (1-12) this class is not charged for'
             sequence:
               type: integer
+    club_name:
+      type: label
+      label: 'Club name, used in reminder messages'
+    reminder_template:
+      type: text
+      label: 'Reminder message template; empty uses the built-in one'

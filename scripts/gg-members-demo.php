@@ -30,12 +30,17 @@ $thisMonth = $today->modify('first day of this month');
 foreach ($database->query('SELECT id FROM {gg_members_member}')->fetchCol() as $id) {
   $manager->deleteMember((int) $id);
 }
+$database->delete('gg_members_expense')->execute();
+$database->delete('gg_members_expense_recurring')->execute();
 
-// Summer closure: the academy doesn't charge July and August.
+// Summer closure: the academy doesn't charge July and August. The club
+// name signs the payment reminders.
 \Drupal::configFactory()->getEditable('gg_members.settings')
   ->set('free_months', [7, 8])
   ->set('class_free_months', [])
+  ->set('club_name', 'Ακαδημία Αθλόπολις')
   ->save();
+
 
 // --- Classes --------------------------------------------------------------
 
@@ -304,6 +309,65 @@ foreach ($intake as $n => $enrollMonth) {
       $addFile($id, $category, $dir, $slug . '-' . $category, $image);
       $stats['files']++;
     }
+  }
+}
+
+// --- Expenses -------------------------------------------------------------
+
+// The fixed costs as recurring expenses, as if set up when the history
+// starts: rent every month (the hall is leased all year), coaches and the
+// phone only in the months the academy is open. Then the variable ones by
+// hand: bills that change with the season, and the odd one-off — kit
+// before the season, tournaments, leaflets.
+$expenses = \Drupal::service('gg_members.expenses');
+$stats['expenses'] = 0;
+foreach ([
+  ['rent', 650, 1, 'Ενοίκιο γηπέδου', FALSE],
+  ['staff', 600, 5, 'Αμοιβές προπονητών', TRUE],
+  ['bills', 35, 20, 'Τηλέφωνο / internet', TRUE],
+] as [$category, $amount, $day, $description, $onlyOpen]) {
+  $database->insert('gg_members_expense_recurring')->fields([
+    'category' => $category,
+    'amount' => $amount,
+    'day' => $day,
+    'description' => $description,
+    'only_open' => (int) $onlyOpen,
+    'active' => 1,
+    'start_month' => $lastSeason->modify('-1 month')->format('Y-m'),
+    'created' => \Drupal::time()->getRequestTime(),
+  ])->execute();
+}
+$stats['expenses'] += $expenses->generateRecurring();
+for ($month = $lastSeason->modify('-1 month'); $month <= $thisMonth; $month = $month->modify('+1 month')) {
+  $number = (int) $month->format('n');
+  $entries = [
+    ['bills', mt_rand(70, 110) + (in_array($number, [12, 1, 2], TRUE) ? 60 : 0), 18, 'Ρεύμα και νερό'],
+  ];
+  if ($number === 9) {
+    $entries[] = ['equipment', 480, 3, 'Μπάλες και κώνοι νέας σεζόν'];
+  }
+  if ($number === 1) {
+    $entries[] = ['equipment', 160, 12, 'Διχτάκια και φαρμακείο'];
+  }
+  if (in_array($number, [11, 3, 5], TRUE)) {
+    $entries[] = ['travel', mt_rand(12, 30) * 10, 22, 'Μετακίνηση για τουρνουά'];
+  }
+  if ($number === 8) {
+    $entries[] = ['marketing', 220, 20, 'Φυλλάδια και αφίσες εγγραφών'];
+  }
+  if ($number === 9) {
+    $entries[] = ['marketing', 120, 8, 'Διαφήμιση στα social media'];
+  }
+  if ($number === 12) {
+    $entries[] = ['other', 180, 15, 'Χριστουγεννιάτικη γιορτή'];
+  }
+  foreach ($entries as [$category, $amount, $day, $description]) {
+    $date = $month->modify('+' . ($day - 1) . ' days');
+    if ($date > $today) {
+      continue;
+    }
+    $expenses->save(['expense_date' => $date->format('Y-m-d'), 'category' => $category, 'amount' => $amount, 'description' => $description]);
+    $stats['expenses']++;
   }
 }
 

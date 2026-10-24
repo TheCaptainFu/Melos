@@ -4,9 +4,12 @@
  * Statistics page for the GG Members module.
  *
  * Available variables:
- * - history: see MemberStats::history() — months, partial, empty, from, to.
+ * - history: see MemberStats::history() — months, partial, empty, from, to;
+ *   or, with one month picked, MemberStats::monthHistory() — single, label.
  *   With less than a year of data (partial), a note says where the numbers
  *   start and the year-based wording changes to "from <month>".
+ * - chart: the month columns' state (selected month, …), see
+ *   MemberStatsController::period().
  * - basics: see MemberStats::basics() — total, average, average_months,
  *   closed_months.
  * - monthly: see MemberStats::monthly() — months (label, name, year, amount,
@@ -20,22 +23,32 @@
 #}
 {# lang="el" so text-transform: uppercase drops the accents. #}
 <div class="gg-members-admin gg-members-statspage" lang="el">
-  <div class="gg-members-actions">
-    <a href="{{ path('gg_members.dashboard') }}" class="button">{{ '← Όλα τα μέλη'|t }}</a>
-  </div>
-
-  {% if history.empty %}
+  {% if history.single %}
+    {# One month picked: nothing year-based. #}
+  {% elseif history.empty %}
     <div class="gg-members-notice">
-      <span class="gg-members-notice__icon" aria-hidden="true">ℹ️</span>
       <p>{{ 'Δεν έχουν καταχωρηθεί ακόμα πληρωμές. Τα στατιστικά θα εμφανιστούν μόλις καταχωρηθούν οι πρώτες.'|t }}</p>
     </div>
   {% elseif history.partial %}
     <div class="gg-members-notice">
-      <span class="gg-members-notice__icon" aria-hidden="true">ℹ️</span>
       <p>{{ 'Τα στοιχεία ξεκινούν από τον @from, όταν άρχισε να χρησιμοποιείται το πρόγραμμα. Όσο περνάει ο καιρός, τα στατιστικά θα γίνονται πιο πλήρη.'|t({'@from': history.from}) }}</p>
     </div>
   {% endif %}
 
+  {% if history.single %}
+    <div class="gg-members-stats gg-members-stats--big">
+      <div class="gg-members-stat">
+        <span class="gg-members-stat__value">{{ basics.total|number_format(2, ',', '.') }}€</span>
+        <span class="gg-members-stat__label">{{ 'Έσοδα @month'|t({'@month': history.label}) }}</span>
+        <span class="gg-members-stat__sub">{{ 'Όσα πληρώθηκαν μέσα στον μήνα.'|t }}</span>
+      </div>
+      <div class="gg-members-stat">
+        <span class="gg-members-stat__value">{{ basics.count }}</span>
+        <span class="gg-members-stat__label">{{ basics.count == 1 ? 'Πληρωμή'|t : 'Πληρωμές'|t }}</span>
+        <span class="gg-members-stat__sub">{{ basics.members == 1 ? '1 μέλος πλήρωσε'|t : '@count μέλη πλήρωσαν'|t({'@count': basics.members}) }}</span>
+      </div>
+    </div>
+  {% else %}
   <div class="gg-members-stats gg-members-stats--big">
     <div class="gg-members-stat">
       <span class="gg-members-stat__value">{{ basics.average|number_format(2, ',', '.') }}€</span>
@@ -59,45 +72,22 @@
     </div>
   </div>
 
-  <section class="gg-members-monthly">
-    <header class="gg-members-section-header">
-      <h2>{{ 'Έσοδα ανά μήνα'|t }}</h2>
-      <p>{{ history.partial ? 'Πόσα πληρώθηκαν κάθε μήνα από τον @from.'|t({'@from': history.from}) : 'Πόσα πληρώθηκαν κάθε μήνα τον τελευταίο χρόνο.'|t }}</p>
-    </header>
-    <div class="gg-members-card gg-members-monthly__card">
-      <ol class="gg-members-monthly__months{{ history.partial ? ' gg-members-monthly__months--short' }}" style="--months: {{ monthly.months|length }}">
-        {% for month in monthly.months %}
-          {% set classes = [
-            'gg-members-monthly__month',
-            month.best ? 'is-best',
-            month.current ? 'is-current',
-            month.closed ? 'is-closed',
-          ] %}
-          <li class="{{ classes|filter(c => c)|join(' ') }}" style="--pct: {{ month.percent }}" title="{{ month.name }}: {{ month.amount|number_format(2, ',', '.') }}€">
-            <span class="gg-members-monthly__amount">
-              {% if month.closed %}
-                {{ 'κλειστό'|t }}
-              {% else %}
-                {{ month.amount|number_format(0, ',', '.') }}€
-              {% endif %}
-            </span>
-            <span class="gg-members-monthly__track" aria-hidden="true"><span class="gg-members-monthly__bar"></span></span>
-            <span class="gg-members-monthly__label">
-              {{ month.label }} <span class="gg-members-monthly__year">{{ month.year|slice(2) }}</span>
-              {% if month.best %}<span class="gg-members-monthly__tag">{{ 'καλύτερος'|t }}</span>{% endif %}
-              {% if month.current %}<span class="gg-members-monthly__tag gg-members-monthly__tag--current">{{ 'μέχρι σήμερα'|t }}</span>{% endif %}
-            </span>
-          </li>
-        {% endfor %}
-      </ol>
-    </div>
-  </section>
+  {% endif %}
+
+  {% include '@gg_members/gg-members-stats-monthly.html.twig' with {
+    monthly: monthly,
+    chart: chart,
+    title: 'Έσοδα ανά μήνα'|t,
+    subtitle: 'Πόσα πληρώθηκαν κάθε μήνα.'|t,
+    variant: 'income',
+    best_label: 'καλύτερος'|t,
+  } only %}
 
   {% if by_class.classes %}
     <section class="gg-members-by-class">
       <header class="gg-members-section-header">
         <h2>{{ 'Ανά τμήμα'|t }}</h2>
-        <p>{{ 'Πόσα από τα παραπάνω έσοδα έφερε κάθε τμήμα, και πόσα από τα ενεργά μέλη έχει.'|t }}</p>
+        <p>{{ history.single ? 'Πόσα έσοδα έφερε κάθε τμήμα τον @month, και πόσα από τα ενεργά μέλη έχει.'|t({'@month': history.from}) : 'Πόσα από τα παραπάνω έσοδα έφερε κάθε τμήμα, και πόσα από τα ενεργά μέλη έχει.'|t }}</p>
       </header>
       <div class="gg-members-class-grid">
         {% for class in by_class.classes %}
@@ -115,8 +105,13 @@
                 <dd>{{ class.members }} <span>({{ class.members_percent }}%)</span></dd>
               </div>
               <div>
-                <dt>{{ 'Μέσος όρος / μήνα'|t }}</dt>
-                <dd>{{ class.average|number_format(2, ',', '.') }}€</dd>
+                {% if history.single %}
+                  <dt>{{ 'Πληρωμές'|t }}</dt>
+                  <dd>{{ class.payments }}</dd>
+                {% else %}
+                  <dt>{{ 'Μέσος όρος / μήνα'|t }}</dt>
+                  <dd>{{ class.average|number_format(2, ',', '.') }}€</dd>
+                {% endif %}
               </div>
             </dl>
           </div>
@@ -128,7 +123,15 @@
   <section class="gg-members-people">
     <header class="gg-members-section-header">
       <h2>{{ 'Μέλη'|t }}</h2>
-      <p>{{ history.partial ? 'Πόσα μέλη έχετε, πόσα ήρθαν και πόσα έφυγαν από τον @from.'|t({'@from': history.from}) : 'Πόσα μέλη έχετε, πόσα ήρθαν και πόσα έφυγαν τον τελευταίο χρόνο.'|t }}</p>
+      <p>
+        {% if history.single %}
+          {{ 'Πόσα μέλη έχετε σήμερα, και πόσα ήρθαν και έφυγαν τον @month.'|t({'@month': history.from}) }}
+        {% elseif history.partial %}
+          {{ 'Πόσα μέλη έχετε, πόσα ήρθαν και πόσα έφυγαν από τον @from.'|t({'@from': history.from}) }}
+        {% else %}
+          {{ 'Πόσα μέλη έχετε, πόσα ήρθαν και πόσα έφυγαν τον τελευταίο χρόνο.'|t }}
+        {% endif %}
+      </p>
     </header>
     <div class="gg-members-stats">
       <div class="gg-members-stat">
@@ -145,12 +148,20 @@
       <div class="gg-members-stat">
         <span class="gg-members-stat__value{{ members.joined ? ' gg-members-stat__value--up' }}">{{ members.joined ? '+' ~ members.joined : 0 }}</span>
         <span class="gg-members-stat__label">{{ 'Ήρθαν'|t }}</span>
-        <span class="gg-members-stat__sub">{{ history.partial ? 'νέες εγγραφές από τον @from'|t({'@from': members.joined_from}) : 'νέες εγγραφές τον τελευταίο χρόνο'|t }}</span>
+        <span class="gg-members-stat__sub">
+          {% if history.single %}{{ 'νέες εγγραφές τον @month'|t({'@month': history.from}) }}
+          {% elseif history.partial %}{{ 'νέες εγγραφές από τον @from'|t({'@from': members.joined_from}) }}
+          {% else %}{{ 'νέες εγγραφές τον τελευταίο χρόνο'|t }}{% endif %}
+        </span>
       </div>
       <div class="gg-members-stat">
         <span class="gg-members-stat__value{{ members.left ? ' gg-members-stat__value--down' }}">{{ members.left ? '−' ~ members.left : 0 }}</span>
         <span class="gg-members-stat__label">{{ 'Έφυγαν'|t }}</span>
-        <span class="gg-members-stat__sub">{{ history.partial ? 'αποχωρήσεις από τον @from'|t({'@from': history.from}) : 'αποχωρήσεις τον τελευταίο χρόνο'|t }}</span>
+        <span class="gg-members-stat__sub">
+          {% if history.single %}{{ 'αποχωρήσεις τον @month'|t({'@month': history.from}) }}
+          {% elseif history.partial %}{{ 'αποχωρήσεις από τον @from'|t({'@from': history.from}) }}
+          {% else %}{{ 'αποχωρήσεις τον τελευταίο χρόνο'|t }}{% endif %}
+        </span>
       </div>
       {% if members.tenure is not null %}
         <div class="gg-members-stat">

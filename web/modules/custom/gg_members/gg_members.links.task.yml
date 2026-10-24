@@ -1,0 +1,43 @@
+# The module's sections as tabs along the top of each of its pages.
+gg_members.tab.members:
+  route_name: gg_members.dashboard
+  base_route: gg_members.dashboard
+  title: 'Μέλη'
+  weight: 0
+
+gg_members.tab.stats:
+  route_name: gg_members.stats
+  base_route: gg_members.dashboard
+  title: 'Στατιστικά'
+  weight: 10
+
+gg_members.tab.expenses:
+  route_name: gg_members.expenses
+  base_route: gg_members.dashboard
+  title: 'Έξοδα'
+  weight: 20
+
+gg_members.tab.settings:
+  route_name: gg_members.settings
+  base_route: gg_members.dashboard
+  title: 'Ρυθμίσεις'
+  weight: 30
+
+# Under "Στατιστικά": income, expenses, and the two together.
+gg_members.tab.stats.income:
+  route_name: gg_members.stats
+  parent_id: gg_members.tab.stats
+  title: 'Έσοδα'
+  weight: 0
+
+gg_members.tab.stats.expenses:
+  route_name: gg_members.stats_expenses
+  parent_id: gg_members.tab.stats
+  title: 'Ανάλυση εξόδων'
+  weight: 10
+
+gg_members.tab.stats.profit:
+  route_name: gg_members.stats_profit
+  parent_id: gg_members.tab.stats
+  title: 'Κέρδος'
+  weight: 20

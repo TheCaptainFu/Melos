@@ -86,10 +86,37 @@ function gg_members_theme() {
       'template' => 'gg-members-stats',
       'variables' => [
         'history' => [],
+        'chart' => [],
         'basics' => [],
         'monthly' => [],
         'by_class' => [],
         'members' => [],
+      ],
+    ],
+    'gg_members_stats_expenses' => [
+      'template' => 'gg-members-stats-expenses',
+      'variables' => [
+        'history' => [],
+        'chart' => [],
+        'basics' => [],
+        'monthly' => [],
+        'categories' => [],
+      ],
+    ],
+    'gg_members_stats_profit' => [
+      'template' => 'gg-members-stats-profit',
+      'variables' => [
+        'history' => [],
+        'chart' => [],
+        'basics' => [],
+        'monthly' => [],
+      ],
+    ],
+    'gg_members_reminder' => [
+      'template' => 'gg-members-reminder',
+      'variables' => [
+        'reminder' => [],
+        'urls' => [],
       ],
     ],
     'gg_members_profile' => [
@@ -102,4 +129,14 @@ function gg_members_theme() {
       ],
     ],
   ];
+}
+
+/**
+ * Implements hook_cron().
+ *
+ * Enters the recurring expenses that have come due, so the books are up to
+ * date even before anyone opens the expenses tab.
+ */
+function gg_members_cron() {
+  \Drupal::service('gg_members.expenses')->generateRecurring();
 }

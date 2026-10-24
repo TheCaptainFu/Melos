@@ -1,0 +1,75 @@
+{#
+/**
+ * @file
+ * Payment reminder dialog for one member.
+ *
+ * The buttons are wired up by js/reminder.js: each logs the reminder, then
+ * opens Viber/SMS/WhatsApp with the (possibly edited) message, or copies it.
+ *
+ * Available variables:
+ * - reminder: see MemberReminders::build() — name, recipient, is_guardian,
+ *   phone, international, message, outstanding, months, last — plus
+ *   last_label ("Viber, 22/10/2026 18:04").
+ * - urls: edit (the member's edit form), log (channel => logging URL).
+ */
+#}
+<div class="gg-members-reminder" lang="el" data-phone="{{ reminder.international }}">
+  {# Who it goes to, and what it's about. #}
+  <div class="gg-members-reminder__recipient">
+    <span class="gg-members-reminder__avatar" aria-hidden="true">{{ reminder.recipient|first|upper }}</span>
+    <div class="gg-members-reminder__who">
+      <strong>{{ reminder.recipient }}</strong>
+      <span>
+        {% if reminder.is_guardian %}{{ 'Κηδεμόνας του μέλους @name'|t({'@name': reminder.name}) }}{% if reminder.phone %} · {% endif %}{% endif %}
+        {{ reminder.phone }}
+      </span>
+    </div>
+    {% if reminder.outstanding > 0 %}
+      <div class="gg-members-reminder__debt">
+        <strong>{{ reminder.outstanding|number_format(2, ',', '.') }}€</strong>
+        <span>{{ reminder.months == 1 ? '1 μήνας'|t : '@count μήνες'|t({'@count': reminder.months}) }}</span>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if not reminder.international %}
+    <div class="gg-members-reminder__warning">
+      {{ 'Δεν υπάρχει τηλέφωνο για αυτό το μέλος. Μπορείτε να αντιγράψετε το μήνυμα, ή να'|t }}
+      <a href="{{ urls.edit }}">{{ 'προσθέσετε τηλέφωνο'|t }}</a>.
+    </div>
+  {% endif %}
+
+  <label class="gg-members-reminder__label" for="gg-members-reminder-message">{{ 'Μήνυμα'|t }}</label>
+  {# autofocus: the dialog puts the cursor here rather than on the first
+     link or button. #}
+  <textarea id="gg-members-reminder-message" class="gg-members-reminder__message" rows="5" autofocus>{{ reminder.message }}</textarea>
+  <p class="gg-members-reminder__muted">{{ 'Μπορείτε να αλλάξετε το κείμενο πριν το στείλετε.'|t }}</p>
+
+  <div class="gg-members-reminder__buttons">
+    <button type="button" class="gg-members-reminder__button gg-members-reminder__button--viber" data-channel="viber" data-log="{{ urls.log.viber }}"{{ not reminder.international ? ' disabled' }}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a2 2 0 012 2v9a2 2 0 01-2 2h-7l-5 4v-4H5a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+      Viber
+    </button>
+    <button type="button" class="gg-members-reminder__button gg-members-reminder__button--whatsapp" data-channel="whatsapp" data-log="{{ urls.log.whatsapp }}"{{ not reminder.international ? ' disabled' }}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.4-4.2A8 8 0 1112 20a8 8 0 01-3.8-1L4 20z"/></svg>
+      WhatsApp
+    </button>
+    <button type="button" class="gg-members-reminder__button gg-members-reminder__button--sms" data-channel="sms" data-log="{{ urls.log.sms }}"{{ not reminder.international ? ' disabled' }}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>
+      SMS
+    </button>
+    <button type="button" class="gg-members-reminder__button gg-members-reminder__button--copy" data-channel="copy" data-log="{{ urls.log.copy }}">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2"/></svg>
+      <span data-copy-label>{{ 'Αντιγραφή'|t }}</span>
+    </button>
+  </div>
+
+  <p class="gg-members-reminder__status" role="status" aria-live="polite">
+    {% if reminder.last_label %}
+      {{ 'Τελευταία υπενθύμιση: @when'|t({'@when': reminder.last_label}) }}
+    {% else %}
+      {{ 'Δεν έχει σταλεί ακόμα υπενθύμιση σε αυτό το μέλος.'|t }}
+    {% endif %}
+  </p>
+  <p class="gg-members-reminder__hint">{{ 'Αν δεν ανοίξει το Viber σε αυτή τη συσκευή, πατήστε «Αντιγραφή» και επικολλήστε το μήνυμα όπου θέλετε.'|t }}</p>
+</div>

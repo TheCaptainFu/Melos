@@ -1,0 +1,67 @@
+{#
+/**
+ * @file
+ * One column per month, shared by the three statistics pages (income,
+ * expenses, profit). Each column's height is relative to the largest month
+ * (--pct); the best complete month is highlighted, this month (still
+ * filling up) striped, closed months marked, and a loss shown in red.
+ *
+ * Every month since the first record is there: twelve fit in view, the rest
+ * are dragged in from the left (js/stats-chart.js). Each column links to the
+ * page about that month (?month=); the picked one is highlighted, the others
+ * fade, and clicking it again — or "Τελευταίοι 12 μήνες" — goes back.
+ *
+ * Available variables:
+ * - monthly: see MemberStats::monthlyRows() — months (key, label, name,
+ *   year, amount, percent, negative, closed, current, best).
+ * - chart: selected ('YYYY-MM' or NULL), reset_url, short (fewer than 12
+ *   months, so the columns are kept month-sized and nothing scrolls).
+ * - title, subtitle: the section heading.
+ * - variant: 'income', 'expenses' or 'profit' (colours).
+ * - best_label: the tag on the best month ("καλύτερος", …).
+ */
+#}
+<section class="gg-members-monthly gg-members-monthly--{{ variant }}{{ chart.selected ? ' has-selection' }}">
+  <header class="gg-members-section-header gg-members-monthly__head">
+    <div>
+      <h2>{{ title }}</h2>
+      <p>{{ subtitle }}{% if not chart.short %} {{ 'Σύρετε το γράφημα για παλαιότερους μήνες, και πατήστε έναν μήνα για να δείτε μόνο αυτόν.'|t }}{% endif %}</p>
+    </div>
+    <a href="{{ chart.reset_url }}" class="gg-members-monthly__reset{{ chart.selected ? '' : ' is-active' }}"{{ chart.selected ? '' : ' aria-current="true"' }}>{{ 'Τελευταίοι 12 μήνες'|t }}</a>
+  </header>
+  <div class="gg-members-card gg-members-monthly__card">
+    <div class="gg-members-monthly__scroller">
+      <ol class="gg-members-monthly__months{{ chart.short ? ' gg-members-monthly__months--short' : ' gg-members-monthly__months--scroll' }}" style="--months: {{ monthly.months|length }}">
+        {% for month in monthly.months %}
+          {% set selected = month.key == chart.selected %}
+          {% set classes = [
+            'gg-members-monthly__month',
+            month.best ? 'is-best',
+            month.current ? 'is-current',
+            month.closed ? 'is-closed',
+            month.negative ? 'is-negative',
+            selected ? 'is-selected',
+          ] %}
+          {% set amount = (month.negative ? '−' : '') ~ month.amount|abs|number_format(0, ',', '.') ~ '€' %}
+          <li>
+            <a href="{{ selected ? chart.reset_url : '?month=' ~ month.key }}" class="{{ classes|filter(c => c)|join(' ') }}" style="--pct: {{ month.percent }}" title="{{ month.name }}: {{ (month.negative ? '−' : '') ~ month.amount|abs|number_format(2, ',', '.') }}€" aria-current="{{ selected ? 'true' : 'false' }}" draggable="false">
+              <span class="gg-members-monthly__amount">
+                {% if month.closed %}
+                  {{ 'κλειστό'|t }}
+                {% else %}
+                  {{ amount }}
+                {% endif %}
+              </span>
+              <span class="gg-members-monthly__track" aria-hidden="true"><span class="gg-members-monthly__bar"></span></span>
+              <span class="gg-members-monthly__label">
+                {{ month.label }} <span class="gg-members-monthly__year">{{ month.year|slice(2) }}</span>
+                {% if month.best %}<span class="gg-members-monthly__tag">{{ best_label }}</span>{% endif %}
+                {% if month.current %}<span class="gg-members-monthly__tag gg-members-monthly__tag--current">{{ 'μέχρι σήμερα'|t }}</span>{% endif %}
+              </span>
+            </a>
+          </li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+</section>

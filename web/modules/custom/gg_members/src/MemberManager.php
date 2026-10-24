@@ -545,6 +545,7 @@ class MemberManager {
       $this->database->delete('gg_members_file')->condition('member_id', $id)->execute();
       $this->database->delete('gg_members_payment')->condition('member_id', $id)->execute();
       $this->database->delete('gg_members_fee')->condition('member_id', $id)->execute();
+      $this->database->delete('gg_members_reminder')->condition('member_id', $id)->execute();
       $this->database->delete('gg_members_member')->condition('id', $id)->execute();
     }
     catch (\Exception $e) {
@@ -786,6 +787,63 @@ class MemberManager {
       'total_paid' => $totalPaid,
       'payment_count' => $paymentCount,
       'last_payment_date' => $lastPaymentDate ?: NULL,
+    ];
+  }
+
+  /**
+   * The whole roster at a glance, for the roster's stats bar: member
+   * counts, who owes and how much, and this month's collection
+   * — what's due from everyone charged for it, how much of that has come in,
+   * and how many have settled it in full. Always the whole roster,
+   * regardless of any filters.
+   *
+   * @param array|null $paidByMember
+   *   getPaidAmountsByMember(), if already loaded.
+   * @param array|null $feesByMember
+   *   getFeeHistoryByMember(), if already loaded.
+   */
+  public function rosterSummary(?array $paidByMember = NULL, ?array $feesByMember = NULL): array {
+    $paidByMember ??= $this->getPaidAmountsByMember();
+    $feesByMember ??= $this->getFeeHistoryByMember();
+
+    $currentMonth = date('Y-m');
+    $membersOwing = 0;
+    $outstanding = 0.0;
+    $monthExpected = 0.0;
+    $monthCollected = 0.0;
+    $monthBilled = 0;
+    $monthPaid = 0;
+    foreach ($this->membersQuery()->execute() as $record) {
+      $memberId = (int) $record->id;
+      // Exact: each month at the fee in force back then, minus whatever was
+      // already paid towards it.
+      $ledger = $this->computeLedger($record, $paidByMember[$memberId] ?? [], $feesByMember[$memberId] ?? []);
+      $owed = self::outstanding($ledger);
+      if ($owed > 0) {
+        $membersOwing++;
+        $outstanding += $owed;
+      }
+
+      // Not in the ledger: not enrolled yet, already left, or a month the
+      // class isn't charged for.
+      if (isset($ledger[$currentMonth])) {
+        $entry = $ledger[$currentMonth];
+        $monthBilled++;
+        $monthExpected += $entry['due'];
+        $monthCollected += min($entry['paid'], $entry['due']);
+        if ($entry['remaining'] <= 0) {
+          $monthPaid++;
+        }
+      }
+    }
+    return $this->getStats() + [
+      'members_owing' => $membersOwing,
+      'outstanding' => $outstanding,
+      'month_expected' => $monthExpected,
+      'month_collected' => $monthCollected,
+      'month_percent' => $monthExpected > 0 ? (int) min(100, round($monthCollected / $monthExpected * 100)) : 0,
+      'month_billed' => $monthBilled,
+      'month_paid' => $monthPaid,
     ];
   }
 

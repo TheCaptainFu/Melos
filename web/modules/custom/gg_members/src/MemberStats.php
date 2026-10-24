@@ -13,6 +13,11 @@ class MemberStats {
   /**
    * Short Greek month names, keyed 1-12.
    */
+  /**
+   * Greek month names in the genitive ("Έσοδα Σεπτεμβρίου"), keyed 1-12.
+   */
+  public const MONTHS_GENITIVE = [1 => 'Ιανουαρίου', 'Φεβρουαρίου', 'Μαρτίου', 'Απριλίου', 'Μαΐου', 'Ιουνίου', 'Ιουλίου', 'Αυγούστου', 'Σεπτεμβρίου', 'Οκτωβρίου', 'Νοεμβρίου', 'Δεκεμβρίου'];
+
   public const SHORT_MONTHS = [1 => 'Ιαν', 'Φεβ', 'Μάρ', 'Απρ', 'Μάι', 'Ιούν', 'Ιούλ', 'Αύγ', 'Σεπ', 'Οκτ', 'Νοέ', 'Δεκ'];
 
   /**
@@ -38,12 +43,72 @@ class MemberStats {
    *   'empty': TRUE if there are no payments at all; 'from' and 'to': the
    *   first and last month, accusative ("Σεπτέμβριο 2026").
    */
-  public function history(): array {
+  public function history(bool $all = FALSE): array {
+    return $this->buildHistory($this->database->query('SELECT MIN(payment_date) FROM {gg_members_payment}')->fetchField() ?: NULL, $all);
+  }
+
+  /**
+   * Same as history(), for the expenses page: from the first expense.
+   */
+  public function expenseHistory(bool $all = FALSE): array {
+    return $this->buildHistory($this->database->query('SELECT MIN(expense_date) FROM {gg_members_expense}')->fetchField() ?: NULL, $all);
+  }
+
+  /**
+   * Same as history(), for the profit page: from the first payment or
+   * expense, whichever came first.
+   */
+  public function profitHistory(bool $all = FALSE): array {
+    $dates = array_filter([
+      $this->database->query('SELECT MIN(payment_date) FROM {gg_members_payment}')->fetchField(),
+      $this->database->query('SELECT MIN(expense_date) FROM {gg_members_expense}')->fetchField(),
+    ]);
+    return $this->buildHistory($dates ? min($dates) : NULL, $all);
+  }
+
+  /**
+   * A one-month period, for when a single month is picked from the period
+   * list: the same shape as history(), with 'single' set and the month's
+   * name in the genitive ('label': "Σεπτεμβρίου 2026") for headings.
+   *
+   * @param string $month
+   *   'YYYY-MM'.
+   */
+  public function monthHistory(string $month): array {
+    $start = new \DateTimeImmutable($month . '-01');
+    return [
+      'months' => [$start],
+      'partial' => FALSE,
+      'empty' => FALSE,
+      'single' => TRUE,
+      'label' => self::MONTHS_GENITIVE[(int) $start->format('n')] . ' ' . $start->format('Y'),
+      'from' => $this->monthAccusative($start),
+      'to' => $this->monthAccusative($start),
+    ];
+  }
+
+  /**
+   * 'YYYY-MM-DD' of the first day after a period.
+   */
+  protected function periodEnd(array $months): string {
+    return end($months)->modify('+1 month')->format('Y-m-d');
+  }
+
+  /**
+   * The months shown, from the last 12 or the first data, whichever is
+   * later (see history()).
+   *
+   * @param string|null $firstDate
+   *   'YYYY-MM-DD' of the first record, or NULL if there are none.
+   * @param bool $all
+   *   Every month since the first record instead (for the columns, which
+   *   scroll back through the whole history).
+   */
+  protected function buildHistory(?string $firstDate, bool $all = FALSE): array {
     $end = new \DateTimeImmutable('first day of this month');
     $yearStart = $end->modify('-11 months');
-    $firstPayment = $this->database->query('SELECT MIN(payment_date) FROM {gg_members_payment}')->fetchField();
-    $dataStart = $firstPayment ? (new \DateTimeImmutable($firstPayment))->modify('first day of this month') : $end;
-    $start = max($yearStart, $dataStart);
+    $dataStart = $firstDate ? (new \DateTimeImmutable($firstDate))->modify('first day of this month') : $end;
+    $start = $all ? min($dataStart, $end) : max($yearStart, $dataStart);
 
     $months = [];
     for ($cursor = $start; $cursor <= $end; $cursor = $cursor->modify('+1 month')) {
@@ -53,7 +118,7 @@ class MemberStats {
     return [
       'months' => $months,
       'partial' => $start > $yearStart,
-      'empty' => !$firstPayment,
+      'empty' => !$firstDate,
       'from' => $this->monthAccusative($start),
       'to' => $this->monthAccusative($end),
     ];
@@ -69,9 +134,13 @@ class MemberStats {
     $months = $history['months'];
 
     $total = (float) $this->database->query(
-      'SELECT COALESCE(SUM(amount), 0) FROM {gg_members_payment} WHERE payment_date >= :start',
-      [':start' => $months[0]->format('Y-m-d')]
+      'SELECT COALESCE(SUM(amount), 0) FROM {gg_members_payment} WHERE payment_date >= :start AND payment_date < :end',
+      [':start' => $months[0]->format('Y-m-d'), ':end' => $this->periodEnd($months)]
     )->fetchField();
+    $counts = $this->database->query(
+      'SELECT COUNT(*) AS payments, COUNT(DISTINCT member_id) AS members FROM {gg_members_payment} WHERE payment_date >= :start AND payment_date < :end',
+      [':start' => $months[0]->format('Y-m-d'), ':end' => $this->periodEnd($months)]
+    )->fetchAssoc();
 
     // Months the academy is closed (summer) bring nothing in by design, so
     // they'd only drag the average down; it's per month of operation.
@@ -80,6 +149,8 @@ class MemberStats {
 
     return [
       'total' => $total,
+      'count' => (int) $counts['payments'],
+      'members' => (int) $counts['members'],
       'average' => $completeMonths ? $completeTotal / $completeMonths : $total,
       'average_months' => $completeMonths,
       'closed_months' => count($months) - $this->countOpenMonths($months, $freeMonths),
@@ -120,28 +191,89 @@ class MemberStats {
    *   still filling up), best (the highest complete month); 'best_amount'.
    */
   public function monthly(array $history): array {
-    $months = $history['months'];
-    $amounts = $this->database->query(
-      'SELECT SUBSTRING(payment_date, 1, 7), SUM(amount) FROM {gg_members_payment} WHERE payment_date >= :start GROUP BY SUBSTRING(payment_date, 1, 7)',
-      [':start' => $months[0]->format('Y-m-d')]
-    )->fetchAllKeyed();
     $freeMonths = array_map('intval', $this->configFactory->get('gg_members.settings')->get('free_months') ?? []);
+    return $this->monthlyRows($history['months'], $this->incomeByMonth($history['months']), $freeMonths);
+  }
+
+  /**
+   * The monthly columns for the expenses page. Closed months aren't marked:
+   * the rent is still paid in the summer.
+   */
+  public function expenseMonthly(array $history): array {
+    return $this->monthlyRows($history['months'], $this->expensesByMonth($history['months']));
+  }
+
+  /**
+   * The monthly columns for the profit page: income minus expenses, a loss
+   * as a negative amount.
+   */
+  public function profitMonthly(array $history): array {
+    $income = $this->incomeByMonth($history['months']);
+    $expenses = $this->expensesByMonth($history['months']);
+    $profit = [];
+    foreach (array_keys($income + $expenses) as $month) {
+      $profit[$month] = ($income[$month] ?? 0) - ($expenses[$month] ?? 0);
+    }
+    return $this->monthlyRows($history['months'], $profit);
+  }
+
+  /**
+   * Money received per month (by payment date): 'YYYY-MM' => amount.
+   */
+  protected function incomeByMonth(array $months): array {
+    return array_map('floatval', $this->database->query(
+      'SELECT SUBSTRING(payment_date, 1, 7), SUM(amount) FROM {gg_members_payment} WHERE payment_date >= :start AND payment_date < :end GROUP BY SUBSTRING(payment_date, 1, 7)',
+      [':start' => $months[0]->format('Y-m-d'), ':end' => $this->periodEnd($months)]
+    )->fetchAllKeyed());
+  }
+
+  /**
+   * Expenses per month: 'YYYY-MM' => amount.
+   */
+  protected function expensesByMonth(array $months): array {
+    return array_map('floatval', $this->database->query(
+      'SELECT SUBSTRING(expense_date, 1, 7), SUM(amount) FROM {gg_members_expense} WHERE expense_date >= :start AND expense_date < :end GROUP BY SUBSTRING(expense_date, 1, 7)',
+      [':start' => $months[0]->format('Y-m-d'), ':end' => $this->periodEnd($months)]
+    )->fetchAllKeyed());
+  }
+
+  /**
+   * One column per month, for any of the three pages.
+   *
+   * @param \DateTimeImmutable[] $months
+   * @param array $amounts
+   *   'YYYY-MM' => amount (negative for a loss on the profit page).
+   * @param int[] $freeMonths
+   *   Calendar months to mark "closed" when nothing came in.
+   *
+   * @return array
+   *   'months': one entry per month, oldest first — label, name, year,
+   *   amount, percent (of the largest month, for the column height),
+   *   negative, closed, current (this month, still filling up), best (the
+   *   highest complete month); 'best_amount'.
+   */
+  protected function monthlyRows(array $months, array $amounts, array $freeMonths = []): array {
     $currentMonth = end($months)->format('Y-m');
+    $inRange = array_intersect_key($amounts, array_flip(array_map(fn($month) => $month->format('Y-m'), $months)));
 
     // The best month is the best *complete* one: this month is still
     // filling up, so it only counts if there's nothing else to compare.
-    $complete = array_map('floatval', array_diff_key($amounts, [$currentMonth => TRUE]));
-    $best = $complete ? max($complete) : (float) ($amounts[$currentMonth] ?? 0);
+    $complete = array_diff_key($inRange, [$currentMonth => TRUE]);
+    $best = $complete ? max($complete) : (float) ($inRange[$currentMonth] ?? 0);
+    $largest = $inRange ? max(array_map('abs', $inRange)) : 0.0;
+
     $rows = [];
     foreach ($months as $month) {
       $key = $month->format('Y-m');
-      $amount = (float) ($amounts[$key] ?? 0);
+      $amount = (float) ($inRange[$key] ?? 0);
       $rows[] = [
+        'key' => $key,
         'label' => self::SHORT_MONTHS[(int) $month->format('n')],
         'name' => MemberManager::formatMonth($key),
         'year' => $month->format('Y'),
         'amount' => $amount,
-        'percent' => $best > 0 ? min(100, round($amount / $best * 100, 1)) : 0,
+        'percent' => $largest > 0 ? min(100, round(abs($amount) / $largest * 100, 1)) : 0,
+        'negative' => $amount < 0,
         'closed' => $amount == 0 && in_array((int) $month->format('n'), $freeMonths, TRUE),
         'current' => $key === $currentMonth,
         'best' => $best > 0 && $amount == $best && ($key !== $currentMonth || !$complete),
@@ -149,6 +281,83 @@ class MemberStats {
     }
 
     return ['months' => $rows, 'best_amount' => $best];
+  }
+
+  /**
+   * The headline numbers for the expenses page: everything spent in the
+   * period, and the average per complete month (all of them — costs like
+   * rent don't stop when the academy closes).
+   */
+  public function expenseBasics(array $history): array {
+    $byMonth = $this->expensesByMonth($history['months']);
+    $complete = array_map(fn($month) => $month->format('Y-m'), array_slice($history['months'], 0, -1));
+    $completeTotal = array_sum(array_intersect_key($byMonth, array_flip($complete)));
+
+    return [
+      'total' => array_sum($byMonth),
+      'count' => (int) $this->database->query(
+        'SELECT COUNT(*) FROM {gg_members_expense} WHERE expense_date >= :start AND expense_date < :end',
+        [':start' => $history['months'][0]->format('Y-m-d'), ':end' => $this->periodEnd($history['months'])]
+      )->fetchField(),
+      'average' => $complete ? $completeTotal / count($complete) : array_sum($byMonth),
+      'average_months' => count($complete),
+    ];
+  }
+
+  /**
+   * The headline numbers for the profit page: income, expenses, what's
+   * left, and the average profit per complete month.
+   */
+  public function profitBasics(array $history): array {
+    $income = $this->incomeByMonth($history['months']);
+    $expenses = $this->expensesByMonth($history['months']);
+    $complete = array_flip(array_map(fn($month) => $month->format('Y-m'), array_slice($history['months'], 0, -1)));
+    $completeProfit = array_sum(array_intersect_key($income, $complete)) - array_sum(array_intersect_key($expenses, $complete));
+
+    $totalIncome = array_sum($income);
+    $totalExpenses = array_sum($expenses);
+    return [
+      'income' => $totalIncome,
+      'expenses' => $totalExpenses,
+      'profit' => $totalIncome - $totalExpenses,
+      'average' => $complete ? $completeProfit / count($complete) : $totalIncome - $totalExpenses,
+      'average_months' => count($complete),
+      // Of every 100€ that comes in, how much goes on expenses.
+      'expense_share' => $totalIncome > 0 ? (int) round(min($totalExpenses, $totalIncome) / $totalIncome * 100) : NULL,
+    ];
+  }
+
+  /**
+   * The period's expenses per category, biggest first: name, color,
+   * amount, percent (of all expenses, adding up to 100), count, average
+   * (per complete month).
+   */
+  public function expensesByCategory(array $history): array {
+    $months = $history['months'];
+    $rows = $this->database->query(
+      'SELECT category, SUM(amount) AS total, COUNT(*) AS entries FROM {gg_members_expense} WHERE expense_date >= :start AND expense_date < :end GROUP BY category ORDER BY total DESC',
+      [':start' => $months[0]->format('Y-m-d'), ':end' => $this->periodEnd($months)]
+    )->fetchAllAssoc('category');
+    $complete = max(1, count($months) - 1);
+    $completeTotals = $this->database->query(
+      'SELECT category, SUM(amount) FROM {gg_members_expense} WHERE expense_date >= :start AND expense_date < :end GROUP BY category',
+      [':start' => $months[0]->format('Y-m-d'), ':end' => end($months)->format('Y-m-d')]
+    )->fetchAllKeyed();
+
+    $percents = $this->percentages(array_map(fn($row) => (float) $row->total, $rows));
+    $categories = [];
+    foreach ($rows as $key => $row) {
+      [$label, $color] = ExpenseManager::CATEGORIES[$key] ?? ExpenseManager::CATEGORIES['other'];
+      $categories[] = [
+        'name' => $label,
+        'color' => $color,
+        'amount' => (float) $row->total,
+        'percent' => $percents[$key],
+        'count' => (int) $row->entries,
+        'average' => count($months) > 1 ? (float) ($completeTotals[$key] ?? 0) / $complete : (float) $row->total,
+      ];
+    }
+    return $categories;
   }
 
   /**
@@ -165,8 +374,12 @@ class MemberStats {
     $months = $history['months'];
 
     $revenue = $this->database->query(
-      'SELECT m.class_tid, SUM(p.amount) FROM {gg_members_payment} p INNER JOIN {gg_members_member} m ON m.id = p.member_id WHERE p.payment_date >= :start GROUP BY m.class_tid',
-      [':start' => $months[0]->format('Y-m-d')]
+      'SELECT m.class_tid, SUM(p.amount) FROM {gg_members_payment} p INNER JOIN {gg_members_member} m ON m.id = p.member_id WHERE p.payment_date >= :start AND p.payment_date < :end GROUP BY m.class_tid',
+      [':start' => $months[0]->format('Y-m-d'), ':end' => $this->periodEnd($months)]
+    )->fetchAllKeyed();
+    $payments = $this->database->query(
+      'SELECT m.class_tid, COUNT(*) FROM {gg_members_payment} p INNER JOIN {gg_members_member} m ON m.id = p.member_id WHERE p.payment_date >= :start AND p.payment_date < :end GROUP BY m.class_tid',
+      [':start' => $months[0]->format('Y-m-d'), ':end' => $this->periodEnd($months)]
     )->fetchAllKeyed();
     $members = $this->database->query(
       'SELECT class_tid, COUNT(*) FROM {gg_members_member} WHERE status = 1 GROUP BY class_tid'
@@ -199,6 +412,7 @@ class MemberStats {
         'members' => $classMembers[$tid],
         'members_percent' => $memberPercents[$tid],
         'average' => $completeMonths ? $completeTotal / $completeMonths : $classRevenue[$tid],
+        'payments' => (int) ($payments[$tid] ?? 0),
       ];
     }
 
@@ -260,11 +474,11 @@ class MemberStats {
       // Only members with a recorded enrollment date can be said to have
       // joined in the period; without one, the fallback (when the record
       // was created) is just when they were typed in.
-      if ($member->enrollment_date && $joinMonth >= $joinedFrom->format('Y-m') && !($history['partial'] && count($months) === 1)) {
+      if ($member->enrollment_date && $joinMonth >= $joinedFrom->format('Y-m') && $joinMonth <= $currentMonth && !($history['partial'] && count($months) === 1)) {
         $totals['joined']++;
         $perClass[$tid]['joined']++;
       }
-      if ($leaveMonth && $leaveMonth >= $start) {
+      if ($leaveMonth && $leaveMonth >= $start && $leaveMonth <= $currentMonth) {
         $totals['left']++;
         $perClass[$tid]['left']++;
       }
@@ -289,17 +503,17 @@ class MemberStats {
         'joined' => $class['joined'],
         'left' => $class['left'],
         'age' => $average($class['ages']),
-        'tenure' => $history['partial'] ? NULL : $average($class['tenure']),
+        'tenure' => $history['partial'] || !empty($history['single']) ? NULL : $average($class['tenure']),
       ];
     }
 
     return [
       'active' => $totals['active'],
-      'active_year_ago' => $history['partial'] ? NULL : $totals['active_year_ago'],
+      'active_year_ago' => $history['partial'] || !empty($history['single']) ? NULL : $totals['active_year_ago'],
       'joined' => $totals['joined'],
       'joined_from' => $this->monthAccusative($joinedFrom),
       'left' => $totals['left'],
-      'tenure' => $history['partial'] ? NULL : $average($totals['tenure']),
+      'tenure' => $history['partial'] || !empty($history['single']) ? NULL : $average($totals['tenure']),
       'classes' => $classes,
     ];
   }

@@ -5,6 +5,7 @@ namespace Drupal\gg_members\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Url;
 use Drupal\gg_members\MemberManager;
+use Drupal\gg_members\MemberReminders;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -13,10 +14,16 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class MemberDashboardController extends ControllerBase {
 
-  public function __construct(protected MemberManager $memberManager) {}
+  public function __construct(
+    protected MemberManager $memberManager,
+    protected MemberReminders $reminders,
+  ) {}
 
   public static function create(ContainerInterface $container) {
-    return new static($container->get('gg_members.manager'));
+    return new static(
+      $container->get('gg_members.manager'),
+      $container->get('gg_members.reminders'),
+    );
   }
 
   public function list(Request $request): array {
@@ -47,6 +54,7 @@ class MemberDashboardController extends ControllerBase {
     $paidByMember = $this->memberManager->getPaidAmountsByMember();
     $feesByMember = $this->memberManager->getFeeHistoryByMember();
     $filesByMember = $this->memberManager->getFileCategoriesByMember();
+    $lastReminders = $this->reminders->lastRemindersByMember();
 
     $allRows = [];
     foreach ($query->execute() as $record) {
@@ -75,6 +83,8 @@ class MemberDashboardController extends ControllerBase {
         'view_url' => MemberManager::withBack(Url::fromRoute('gg_members.member_view', ['member' => $record->id]), $back),
         'edit_url' => MemberManager::withBack(Url::fromRoute('gg_members.member_edit', ['member' => $record->id]), $back),
         'payments_url' => MemberManager::withBack(Url::fromRoute('gg_members.payments', ['member' => $record->id]), $back),
+        'reminder_url' => MemberManager::withBack(Url::fromRoute('gg_members.reminder', ['member' => $record->id]), $back),
+        'last_reminder' => isset($lastReminders[$memberId]) ? date('d/m', $lastReminders[$memberId]) : NULL,
       ];
     }
 
@@ -101,63 +111,12 @@ class MemberDashboardController extends ControllerBase {
       '#filters' => $filters,
       '#rows' => $rows,
       '#add_url' => MemberManager::withBack(Url::fromRoute('gg_members.member_add'), $back),
-      '#stats' => $this->buildStats($paidByMember, $feesByMember),
+      '#stats' => $this->memberManager->rosterSummary($paidByMember, $feesByMember),
       '#pager' => ['#type' => 'pager'],
-      '#attached' => ['library' => ['gg_members/admin', 'gg_members/remember_scroll', 'gg_members/filter_autosubmit']],
+      '#attached' => ['library' => ['gg_members/admin', 'gg_members/remember_scroll', 'gg_members/filter_autosubmit', 'core/drupal.dialog.ajax']],
     ];
   }
 
-  /**
-   * Roster-wide KPI numbers for the stats bar: always the whole roster,
-   * independent of the class/status/owes filters above (which only affect
-   * the table), so the bar doesn't jump around as the editor filters.
-   */
-  protected function buildStats(array $paidByMember, array $feesByMember): array {
-    $stats = $this->memberManager->getStats();
-
-    $currentMonth = date('Y-m');
-    $membersOwing = 0;
-    $outstanding = 0.0;
-    // This month only: what's due from everyone charged for it, how much of
-    // that has come in, and how many have settled it in full.
-    $monthExpected = 0.0;
-    $monthCollected = 0.0;
-    $monthBilled = 0;
-    $monthPaid = 0;
-    foreach ($this->memberManager->membersQuery()->execute() as $record) {
-      $memberId = (int) $record->id;
-      // Exact: each month at the fee in force back then, minus whatever was
-      // already paid towards it.
-      $ledger = $this->memberManager->computeLedger($record, $paidByMember[$memberId] ?? [], $feesByMember[$memberId] ?? []);
-      $owed = MemberManager::outstanding($ledger);
-      if ($owed > 0) {
-        $membersOwing++;
-        $outstanding += $owed;
-      }
-
-      // Not in the ledger: not enrolled yet, already left, or a month the
-      // class isn't charged for.
-      if (isset($ledger[$currentMonth])) {
-        $entry = $ledger[$currentMonth];
-        $monthBilled++;
-        $monthExpected += $entry['due'];
-        $monthCollected += min($entry['paid'], $entry['due']);
-        if ($entry['remaining'] <= 0) {
-          $monthPaid++;
-        }
-      }
-    }
-
-    return $stats + [
-      'members_owing' => $membersOwing,
-      'outstanding' => $outstanding,
-      'month_expected' => $monthExpected,
-      'month_collected' => $monthCollected,
-      'month_percent' => $monthExpected > 0 ? (int) min(100, round($monthCollected / $monthExpected * 100)) : 0,
-      'month_billed' => $monthBilled,
-      'month_paid' => $monthPaid,
-    ];
-  }
 
   /**
    * The roster's document icons, one per category: whether the member has

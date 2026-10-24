@@ -1,0 +1,110 @@
+{#
+/**
+ * @file
+ * Statistics, expenses: the same layout as the income page — two headline
+ * cards, one column per month, then a card per expense category.
+ *
+ * Available variables:
+ * - history: see MemberStats::buildHistory() — months, partial, empty, from,
+ *   to.
+ * - basics: see MemberStats::expenseBasics() — total, average,
+ *   average_months.
+ * - monthly: see MemberStats::expenseMonthly().
+ * - categories: see MemberStats::expensesByCategory() — name, color, amount,
+ *   percent, count, average.
+ */
+#}
+{# lang="el" so text-transform: uppercase drops the accents. #}
+<div class="gg-members-admin gg-members-statspage" lang="el">
+  {% if history.single %}
+    {# One month picked: nothing year-based. #}
+  {% elseif history.empty %}
+    <div class="gg-members-notice">
+      <p>{{ 'Δεν έχουν καταχωρηθεί ακόμα έξοδα. Προσθέστε τα στην καρτέλα «Έξοδα», ή ορίστε τα πάγια έξοδα στις Ρυθμίσεις.'|t }}</p>
+    </div>
+  {% elseif history.partial %}
+    <div class="gg-members-notice">
+      <p>{{ 'Τα στοιχεία ξεκινούν από τον @from, όταν καταχωρήθηκε το πρώτο έξοδο. Όσο περνάει ο καιρός, τα στατιστικά θα γίνονται πιο πλήρη.'|t({'@from': history.from}) }}</p>
+    </div>
+  {% endif %}
+
+  {% if history.single %}
+    <div class="gg-members-stats gg-members-stats--big">
+      <div class="gg-members-stat">
+        <span class="gg-members-stat__value">{{ basics.total|number_format(2, ',', '.') }}€</span>
+        <span class="gg-members-stat__label">{{ 'Έξοδα @month'|t({'@month': history.label}) }}</span>
+        <span class="gg-members-stat__sub">{{ 'Όσα καταχωρήθηκαν μέσα στον μήνα.'|t }}</span>
+      </div>
+      <div class="gg-members-stat">
+        <span class="gg-members-stat__value">{{ basics.count }}</span>
+        <span class="gg-members-stat__label">{{ basics.count == 1 ? 'Καταχώρηση'|t : 'Καταχωρήσεις'|t }}</span>
+        <span class="gg-members-stat__sub">{{ 'έξοδα που καταχωρήθηκαν τον @month'|t({'@month': history.from}) }}</span>
+      </div>
+    </div>
+  {% else %}
+  <div class="gg-members-stats gg-members-stats--big">
+    <div class="gg-members-stat">
+      <span class="gg-members-stat__value">{{ basics.average|number_format(2, ',', '.') }}€</span>
+      <span class="gg-members-stat__label">{{ 'Μέσος όρος εξόδων / μήνα'|t }}</span>
+      <span class="gg-members-stat__sub">
+        {% if not basics.average_months %}
+          {{ 'Ο πρώτος μήνας δεν έχει ολοκληρωθεί ακόμα, οπότε είναι τα έξοδα μέχρι σήμερα.'|t }}
+        {% elseif basics.average_months == 1 %}
+          {{ 'Από τον 1 ολοκληρωμένο μήνα.'|t }}
+        {% else %}
+          {{ 'Από τους @count ολοκληρωμένους μήνες (μαζί με τους κλειστούς, γιατί έξοδα όπως το ενοίκιο συνεχίζονται).'|t({'@count': basics.average_months}) }}
+        {% endif %}
+      </span>
+    </div>
+    <div class="gg-members-stat">
+      <span class="gg-members-stat__value">{{ basics.total|number_format(2, ',', '.') }}€</span>
+      <span class="gg-members-stat__label">{{ history.partial ? 'Έξοδα μέχρι σήμερα'|t : 'Έξοδα τελευταίου χρόνου'|t }}</span>
+      <span class="gg-members-stat__sub">{{ 'Όσα καταχωρήθηκαν από τον @from έως τον @to.'|t({'@from': history.from, '@to': history.to}) }}</span>
+    </div>
+  </div>
+
+  {% endif %}
+
+  {% include '@gg_members/gg-members-stats-monthly.html.twig' with {
+    monthly: monthly,
+    chart: chart,
+    title: 'Έξοδα ανά μήνα'|t,
+    subtitle: 'Πόσα ξοδεύτηκαν κάθε μήνα.'|t,
+    variant: 'expenses',
+    best_label: 'περισσότερα'|t,
+  } only %}
+
+  {% if categories %}
+    <section class="gg-members-by-class">
+      <header class="gg-members-section-header">
+        <h2>{{ 'Ανά κατηγορία'|t }}</h2>
+        <p>{{ history.single ? 'Πού πήγαν τα έξοδα τον @month.'|t({'@month': history.from}) : 'Πού πήγαν τα παραπάνω έξοδα.'|t }}</p>
+      </header>
+      <div class="gg-members-class-grid">
+        {% for category in categories %}
+          <div class="gg-members-card gg-members-class-card" style="--class-color: {{ category.color }}">
+            <div class="gg-members-class-card__head">
+              <h3 class="gg-members-class-card__name">{{ category.name }}</h3>
+              <span class="gg-members-class-card__percent">{{ category.percent }}%</span>
+            </div>
+            <div class="gg-members-class-card__amount">{{ category.amount|number_format(2, ',', '.') }}€</div>
+            <div class="gg-members-class-card__caption">{{ 'του συνόλου των εξόδων'|t }}</div>
+            <span class="gg-members-progress gg-members-class-card__bar" aria-hidden="true"><span class="gg-members-progress__bar" style="width: {{ category.percent }}%"></span></span>
+            <dl class="gg-members-class-card__facts">
+              <div>
+                <dt>{{ 'Καταχωρήσεις'|t }}</dt>
+                <dd>{{ category.count }}</dd>
+              </div>
+              {% if not history.single %}
+                <div>
+                  <dt>{{ 'Μέσος όρος / μήνα'|t }}</dt>
+                  <dd>{{ category.average|number_format(2, ',', '.') }}€</dd>
+                </div>
+              {% endif %}
+            </dl>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+</div>

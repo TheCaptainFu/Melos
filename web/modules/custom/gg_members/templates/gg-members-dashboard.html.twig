@@ -56,8 +56,6 @@
   <div class="gg-members-actions">
     <a href="{{ add_url }}" class="button button--primary">{{ '+ Νέο μέλος'|t }}</a>
     <a href="{{ path('gg_members.export') }}" class="button gg-members-export">{{ 'Εξαγωγή σε Excel'|t }}</a>
-    <a href="{{ path('gg_members.stats') }}" class="button gg-members-stats-link">{{ 'Στατιστικά'|t }}</a>
-    <a href="{{ path('gg_members.settings') }}" class="button">{{ 'Ρυθμίσεις'|t }}</a>
   </div>
 
   <div class="gg-members-card gg-members-card--filters">
@@ -146,10 +144,16 @@
               </td>
               <td class="gg-members-cell--nowrap">
                 {% if row.owes %}
-                  <a href="{{ row.payments_url }}" class="gg-members-debt" title="{{ row.unpaid_title }}">
-                    <span class="gg-members-badge gg-members-badge--owes">{{ row.outstanding }}€</span>
-                    <span class="gg-members-cell-note">{{ row.unpaid_count_label }}</span>
-                  </a>
+                  <div class="gg-members-debt-cell">
+                    <a href="{{ row.payments_url }}" class="gg-members-debt" title="{{ row.unpaid_title }}">
+                      <span class="gg-members-badge gg-members-badge--owes">{{ row.outstanding }}€</span>
+                      <span class="gg-members-cell-note">{{ row.unpaid_count_label }}</span>
+                    </a>
+                    <a href="{{ row.reminder_url }}" class="use-ajax gg-members-remind{{ row.last_reminder ? ' is-sent' }}" data-dialog-type="modal" data-dialog-options='{"width":560,"dialogClass":"gg-members-reminder-dialog"}' title="{{ row.last_reminder ? 'Υπενθύμιση — τελευταία στις @date'|t({'@date': row.last_reminder}) : 'Στείλτε υπενθύμιση'|t }}">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15L6 16z"/><path d="M10 20a2 2 0 004 0"/></svg>
+                      <span>{{ row.last_reminder ?: 'Υπενθύμιση'|t }}</span>
+                    </a>
+                  </div>
                 {% else %}
                   <span class="gg-members-badge gg-members-badge--paid">{{ 'Εξοφλημένο'|t }}</span>
                 {% endif %}
@@ -172,11 +176,16 @@
                   {% endfor %}
                 </ul>
               </td>
-              <td class="gg-members-row-actions">
-                <a href="{{ row.payments_url }}" class="gg-members-action--payments">{{ 'Πληρωμές'|t }}</a>
-                <a href="{{ row.edit_url }}" class="gg-members-action--icon" title="{{ 'Επεξεργασία'|t }}" aria-label="{{ 'Επεξεργασία: @name'|t({'@name': row.name}) }}">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>
-                </a>
+              {# The flex layout goes on an inner div: on the cell itself it
+                 would stop it behaving as a table cell (its row border no
+                 longer lines up with the rest of the row). #}
+              <td class="gg-members-cell--actions">
+                <div class="gg-members-row-actions">
+                  <a href="{{ row.payments_url }}" class="gg-members-action--payments">{{ 'Πληρωμές'|t }}</a>
+                  <a href="{{ row.edit_url }}" class="gg-members-action--icon" title="{{ 'Επεξεργασία'|t }}" aria-label="{{ 'Επεξεργασία: @name'|t({'@name': row.name}) }}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>
+                  </a>
+                </div>
               </td>
             </tr>
           {% else %}
