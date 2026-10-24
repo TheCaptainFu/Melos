@@ -112,13 +112,6 @@ function gg_members_theme() {
         'monthly' => [],
       ],
     ],
-    'gg_members_reminder' => [
-      'template' => 'gg-members-reminder',
-      'variables' => [
-        'reminder' => [],
-        'urls' => [],
-      ],
-    ],
     'gg_members_profile' => [
       'template' => 'gg-members-profile',
       'variables' => [

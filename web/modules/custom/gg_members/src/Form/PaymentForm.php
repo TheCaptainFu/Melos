@@ -76,10 +76,8 @@ class PaymentForm extends FormBase {
             '@total' => MemberManager::formatMoney(MemberManager::outstanding($unpaidMonths)),
           ]) . '</strong> '
           . Html::escape(implode(', ', array_map([MemberManager::class, 'formatLedgerMonth'], array_keys($unpaidMonths), $unpaidMonths)))
-          . ' <a href="' . Html::escape(MemberManager::withBack(\Drupal\Core\Url::fromRoute('gg_members.reminder', ['member' => $member]), MemberManager::backFromRequest())->toString()) . '" class="button button--small use-ajax gg-members-remind-button" data-dialog-type="modal" data-dialog-options=\'{"width":560,"dialogClass":"gg-members-reminder-dialog"}\'>' . $this->t('Υπενθύμιση') . '</a>'
           . '</div>',
       ];
-      $form['#attached']['library'][] = 'core/drupal.dialog.ajax';
     }
     else {
       $form['unpaid'] = [

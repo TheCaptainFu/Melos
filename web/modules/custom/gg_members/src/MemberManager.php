@@ -545,7 +545,6 @@ class MemberManager {
       $this->database->delete('gg_members_file')->condition('member_id', $id)->execute();
       $this->database->delete('gg_members_payment')->condition('member_id', $id)->execute();
       $this->database->delete('gg_members_fee')->condition('member_id', $id)->execute();
-      $this->database->delete('gg_members_reminder')->condition('member_id', $id)->execute();
       $this->database->delete('gg_members_member')->condition('id', $id)->execute();
     }
     catch (\Exception $e) {

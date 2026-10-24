@@ -224,7 +224,6 @@ function gg_members_schema() {
   ];
 
   $schema['gg_members_fee'] = gg_members_fee_table();
-  $schema['gg_members_reminder'] = gg_members_reminder_table();
   $schema['gg_members_expense'] = gg_members_expense_table();
   $schema['gg_members_expense_recurring'] = gg_members_expense_recurring_table();
 
@@ -364,56 +363,6 @@ function gg_members_expense_recurring_table(): array {
       ],
     ],
     'primary key' => ['id'],
-  ];
-}
-
-/**
- * Schema of the gg_members_reminder table, shared with
- * gg_members_update_10008().
- */
-function gg_members_reminder_table(): array {
-  return [
-    'description' => 'Payment reminders sent to members (Viber, SMS, WhatsApp or copied), one row per reminder.',
-    'fields' => [
-      'id' => [
-        'type' => 'serial',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ],
-      'member_id' => [
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ],
-      'channel' => [
-        'type' => 'varchar',
-        'length' => 16,
-        'not null' => TRUE,
-        'description' => "'viber', 'sms', 'whatsapp' or 'copy'.",
-      ],
-      'uid' => [
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-        'description' => 'Who sent it.',
-      ],
-      'created' => [
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ],
-    ],
-    'primary key' => ['id'],
-    'indexes' => [
-      'member_created' => ['member_id', 'created'],
-    ],
-    'foreign keys' => [
-      'member' => [
-        'table' => 'gg_members_member',
-        'columns' => ['member_id' => 'id'],
-      ],
-    ],
   ];
 }
 
@@ -645,25 +594,6 @@ function gg_members_update_10007(): void {
 }
 
 /**
- * Payment reminders: the log table, and the club name and message template
- * settings (empty, so the built-in message and the site name are used).
- */
-function gg_members_update_10008(): void {
-  $schema = \Drupal::database()->schema();
-  if (!$schema->tableExists('gg_members_reminder')) {
-    $schema->createTable('gg_members_reminder', gg_members_reminder_table());
-  }
-
-  $config = \Drupal::configFactory()->getEditable('gg_members.settings');
-  foreach (['club_name', 'reminder_template'] as $key) {
-    if ($config->get($key) === NULL) {
-      $config->set($key, '');
-    }
-  }
-  $config->save();
-}
-
-/**
  * Expenses: the table behind the "Έξοδα" tab.
  */
 function gg_members_update_10009(): void {
@@ -690,4 +620,18 @@ function gg_members_update_10010(): void {
       'description' => 'The recurring expense that entered it automatically, if any.',
     ]);
   }
+}
+
+/**
+ * Payment reminders were taken out until they're ready: their log table and
+ * settings go (nothing to do on sites that never had them).
+ */
+function gg_members_update_10011(): void {
+  $schema = \Drupal::database()->schema();
+  if ($schema->tableExists('gg_members_reminder')) {
+    $schema->dropTable('gg_members_reminder');
+  }
+
+  $config = \Drupal::configFactory()->getEditable('gg_members.settings');
+  $config->clear('club_name')->clear('reminder_template')->save();
 }

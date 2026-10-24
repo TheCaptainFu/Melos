@@ -22,26 +22,6 @@ gg_members.stats:
   requirements:
     _permission: 'administer gg_members'
 
-gg_members.reminder:
-  path: '/admin/members/{member}/reminder'
-  defaults:
-    _controller: '\Drupal\gg_members\Controller\MemberReminderController::dialog'
-    _title_callback: '\Drupal\gg_members\Controller\MemberReminderController::title'
-  requirements:
-    _permission: 'administer gg_members'
-    member: \d+
-
-gg_members.reminder_log:
-  path: '/admin/members/{member}/reminder/log/{channel}'
-  defaults:
-    _controller: '\Drupal\gg_members\Controller\MemberReminderController::log'
-  methods: [POST]
-  requirements:
-    _permission: 'administer gg_members'
-    _csrf_token: 'TRUE'
-    member: \d+
-    channel: '[a-z]+'
-
 gg_members.expenses:
   path: '/admin/members/expenses'
   defaults:

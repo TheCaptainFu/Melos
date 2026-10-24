@@ -5,7 +5,6 @@ namespace Drupal\gg_members\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Url;
 use Drupal\gg_members\MemberManager;
-use Drupal\gg_members\MemberReminders;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -14,16 +13,10 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class MemberDashboardController extends ControllerBase {
 
-  public function __construct(
-    protected MemberManager $memberManager,
-    protected MemberReminders $reminders,
-  ) {}
+  public function __construct(protected MemberManager $memberManager) {}
 
   public static function create(ContainerInterface $container) {
-    return new static(
-      $container->get('gg_members.manager'),
-      $container->get('gg_members.reminders'),
-    );
+    return new static($container->get('gg_members.manager'));
   }
 
   public function list(Request $request): array {
@@ -54,7 +47,6 @@ class MemberDashboardController extends ControllerBase {
     $paidByMember = $this->memberManager->getPaidAmountsByMember();
     $feesByMember = $this->memberManager->getFeeHistoryByMember();
     $filesByMember = $this->memberManager->getFileCategoriesByMember();
-    $lastReminders = $this->reminders->lastRemindersByMember();
 
     $allRows = [];
     foreach ($query->execute() as $record) {
@@ -83,8 +75,6 @@ class MemberDashboardController extends ControllerBase {
         'view_url' => MemberManager::withBack(Url::fromRoute('gg_members.member_view', ['member' => $record->id]), $back),
         'edit_url' => MemberManager::withBack(Url::fromRoute('gg_members.member_edit', ['member' => $record->id]), $back),
         'payments_url' => MemberManager::withBack(Url::fromRoute('gg_members.payments', ['member' => $record->id]), $back),
-        'reminder_url' => MemberManager::withBack(Url::fromRoute('gg_members.reminder', ['member' => $record->id]), $back),
-        'last_reminder' => isset($lastReminders[$memberId]) ? date('d/m', $lastReminders[$memberId]) : NULL,
       ];
     }
 
@@ -113,7 +103,7 @@ class MemberDashboardController extends ControllerBase {
       '#add_url' => MemberManager::withBack(Url::fromRoute('gg_members.member_add'), $back),
       '#stats' => $this->memberManager->rosterSummary($paidByMember, $feesByMember),
       '#pager' => ['#type' => 'pager'],
-      '#attached' => ['library' => ['gg_members/admin', 'gg_members/remember_scroll', 'gg_members/filter_autosubmit', 'core/drupal.dialog.ajax']],
+      '#attached' => ['library' => ['gg_members/admin', 'gg_members/remember_scroll', 'gg_members/filter_autosubmit']],
     ];
   }
 

@@ -7,7 +7,7 @@ remember_scroll:
     - core/once
 
 admin:
-  version: 1.0.77
+  version: 1.0.78
   css:
     theme:
       css/admin.css: {}
@@ -46,18 +46,3 @@ filter_autosubmit:
     - core/drupal
     - core/once
 
-reminder:
-  version: 1.0.0
-  js:
-    js/reminder.js: {}
-  dependencies:
-    - core/drupal
-    - core/once
-
-settings_form:
-  version: 1.0.0
-  js:
-    js/settings-form.js: {}
-  dependencies:
-    - core/drupal
-    - core/once

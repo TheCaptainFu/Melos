@@ -144,16 +144,10 @@
               </td>
               <td class="gg-members-cell--nowrap">
                 {% if row.owes %}
-                  <div class="gg-members-debt-cell">
-                    <a href="{{ row.payments_url }}" class="gg-members-debt" title="{{ row.unpaid_title }}">
-                      <span class="gg-members-badge gg-members-badge--owes">{{ row.outstanding }}€</span>
-                      <span class="gg-members-cell-note">{{ row.unpaid_count_label }}</span>
-                    </a>
-                    <a href="{{ row.reminder_url }}" class="use-ajax gg-members-remind{{ row.last_reminder ? ' is-sent' }}" data-dialog-type="modal" data-dialog-options='{"width":560,"dialogClass":"gg-members-reminder-dialog"}' title="{{ row.last_reminder ? 'Υπενθύμιση — τελευταία στις @date'|t({'@date': row.last_reminder}) : 'Στείλτε υπενθύμιση'|t }}">
-                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15L6 16z"/><path d="M10 20a2 2 0 004 0"/></svg>
-                      <span>{{ row.last_reminder ?: 'Υπενθύμιση'|t }}</span>
-                    </a>
-                  </div>
+                  <a href="{{ row.payments_url }}" class="gg-members-debt" title="{{ row.unpaid_title }}">
+                    <span class="gg-members-badge gg-members-badge--owes">{{ row.outstanding }}€</span>
+                    <span class="gg-members-cell-note">{{ row.unpaid_count_label }}</span>
+                  </a>
                 {% else %}
                   <span class="gg-members-badge gg-members-badge--paid">{{ 'Εξοφλημένο'|t }}</span>
                 {% endif %}

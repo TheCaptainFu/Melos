@@ -91,10 +91,9 @@ class MemberProfileController extends ControllerBase {
         'edit' => MemberManager::withBack(Url::fromRoute('gg_members.member_edit', ['member' => $member]), $back),
         'payments' => MemberManager::withBack(Url::fromRoute('gg_members.payments', ['member' => $member]), $back),
         'delete' => MemberManager::withBack(Url::fromRoute('gg_members.member_delete', ['member' => $member]), $back),
-        'reminder' => MemberManager::withBack(Url::fromRoute('gg_members.reminder', ['member' => $member]), $back),
         'back' => MemberManager::listUrl($back),
       ],
-      '#attached' => ['library' => ['gg_members/admin', 'core/drupal.dialog.ajax']],
+      '#attached' => ['library' => ['gg_members/admin']],
       '#cache' => ['max-age' => 0],
     ];
   }

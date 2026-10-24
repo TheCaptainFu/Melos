@@ -33,12 +33,10 @@ foreach ($database->query('SELECT id FROM {gg_members_member}')->fetchCol() as $
 $database->delete('gg_members_expense')->execute();
 $database->delete('gg_members_expense_recurring')->execute();
 
-// Summer closure: the academy doesn't charge July and August. The club
-// name signs the payment reminders.
+// Summer closure: the academy doesn't charge July and August.
 \Drupal::configFactory()->getEditable('gg_members.settings')
   ->set('free_months', [7, 8])
   ->set('class_free_months', [])
-  ->set('club_name', 'Ακαδημία Αθλόπολις')
   ->save();
 
 
