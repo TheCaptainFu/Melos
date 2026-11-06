@@ -1,0 +1,19 @@
+# "Παρουσιολόγιο" among the members tabs, before "Ρυθμίσεις".
+gg_members_attendance.tab:
+  route_name: gg_members_attendance.today
+  base_route: gg_members.dashboard
+  title: 'Παρουσιολόγιο'
+  weight: 25
+
+# Under it: who came (by day), and the members' QR cards.
+gg_members_attendance.tab.day:
+  route_name: gg_members_attendance.today
+  parent_id: gg_members_attendance.tab
+  title: 'Παρουσίες'
+  weight: 0
+
+gg_members_attendance.tab.cards:
+  route_name: gg_members_attendance.cards
+  parent_id: gg_members_attendance.tab
+  title: 'Κάρτες QR'
+  weight: 10

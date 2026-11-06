@@ -1,0 +1,5 @@
+admin:
+  version: 1.0.4
+  css:
+    theme:
+      css/attendance.css: {}

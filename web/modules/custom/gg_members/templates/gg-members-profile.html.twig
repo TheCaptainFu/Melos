@@ -11,6 +11,7 @@
  *   payment_count, last_payment_date.
  * - documents: list of {label, files: [{name, url}]}.
  * - urls: edit, payments, delete, back.
+ * - extra: sections from other modules (hook_gg_members_profile_alter()).
  */
 #}
 <div class="gg-members-admin gg-members-profile" lang="el">
@@ -122,6 +123,9 @@
         {% endfor %}
       </dl>
     </div>
+
+    {# Sections from other modules (e.g. the attendance card). #}
+    {{ extra }}
   </div>
 
   {% if member.notes %}

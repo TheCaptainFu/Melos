@@ -1,0 +1,21 @@
+services:
+  gg_members_attendance.cards:
+    class: Drupal\gg_members_attendance\QrCards
+    arguments:
+      - '@database'
+      - '@config.factory'
+      - '@gg_members.manager'
+      - '@datetime.time'
+      - '@renderer'
+      - '@logger.factory'
+  gg_members_attendance.attendance:
+    class: Drupal\gg_members_attendance\Attendance
+    arguments:
+      - '@database'
+      - '@gg_members.manager'
+      - '@gg_members_attendance.cards'
+      - '@datetime.time'
+      - '@current_user'
+      - '@entity_type.manager'
+      - '@file_system'
+      - '@image.factory'

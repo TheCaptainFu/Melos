@@ -1,0 +1,17 @@
+{# The door screens' look, shared by the scanner and the card's link page. #}
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #fff; }
+  .result { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 24px; text-align: center; }
+  .result--ok { background: #15803d; }
+  .result--warn { background: #c2410c; }
+  .result--again { background: #1d4ed8; }
+  .result--inactive, .result--unknown { background: #b91c1c; }
+  .result__photo { width: 168px; height: 168px; margin-bottom: 14px; border: 5px solid rgba(255,255,255,.85); border-radius: 50%; object-fit: cover; background: rgba(255,255,255,.15); }
+  .result__photo--initial { display: grid; place-items: center; font-size: 4.5rem; font-weight: 800; }
+  .result__name { margin: 0; font-size: 2.1rem; font-weight: 800; line-height: 1.15; }
+  .result__class { margin: 0; font-size: 1.2rem; opacity: .9; }
+  .result__title { margin: 18px 0 0; font-size: 2.6rem; font-weight: 800; line-height: 1.1; }
+  .result__note { margin: 4px 0 0; font-size: 1.4rem; opacity: .95; }
+</style>

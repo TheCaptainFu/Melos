@@ -1,0 +1,8 @@
+{
+    "name": "thecaptainfu/gg_members_attendance",
+    "description": "Attendance with QR cards for GG Members.",
+    "type": "drupal-module",
+    "require": {
+        "chillerlan/php-qrcode": "^5.0"
+    }
+}

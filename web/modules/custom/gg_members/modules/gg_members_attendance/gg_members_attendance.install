@@ -1,0 +1,138 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for GG Members Attendance.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function gg_members_attendance_schema() {
+  $schema['gg_members_qr'] = [
+    'description' => "Each member's QR card: the random code it holds, and when it was last emailed.",
+    'fields' => [
+      'member_id' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'token' => [
+        'type' => 'varchar_ascii',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => 'Random, URL-safe; a new one makes the old card stop working.',
+      ],
+      'created' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'sent' => [
+        'type' => 'int',
+        'not null' => FALSE,
+        'description' => 'When the card was last emailed, if ever.',
+      ],
+      'sent_to' => [
+        'type' => 'varchar',
+        'length' => 254,
+        'not null' => FALSE,
+      ],
+    ],
+    'primary key' => ['member_id'],
+    'unique keys' => ['token' => ['token']],
+  ];
+  $schema['gg_members_attendance'] = gg_members_attendance_table();
+  return $schema;
+}
+
+/**
+ * Schema of the gg_members_attendance table, shared with
+ * gg_members_attendance_update_10001().
+ */
+function gg_members_attendance_table(): array {
+  return [
+    'description' => 'Who came to training: one row per member per day.',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'member_id' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'attended' => [
+        'type' => 'varchar_ascii',
+        'length' => 10,
+        'not null' => TRUE,
+        'description' => "The day, 'YYYY-MM-DD'.",
+      ],
+      'created' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'When it was recorded (the time they came in).',
+      ],
+      'class_tid' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'The class the member was in that day.',
+      ],
+      'method' => [
+        'type' => 'varchar_ascii',
+        'length' => 16,
+        'not null' => TRUE,
+        'default' => 'qr',
+        'description' => "'qr' (scanned at the door) or 'manual'.",
+      ],
+      'uid' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Who recorded it.',
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => ['member_day' => ['member_id', 'attended']],
+    'indexes' => ['attended' => ['attended']],
+  ];
+}
+
+/**
+ * Implements hook_install().
+ *
+ * Every member there already gets a card, and there's a "Είσοδος" role for
+ * the door device.
+ */
+function gg_members_attendance_install() {
+  \Drupal::service('gg_members_attendance.cards')->ensureAll();
+  gg_members_attendance_door_role();
+}
+
+/**
+ * The "Είσοδος" role: the account the door device is logged in with can
+ * scan cards and nothing else (no phone numbers, payments or documents).
+ */
+function gg_members_attendance_door_role(): void {
+  $storage = \Drupal::entityTypeManager()->getStorage('user_role');
+  $role = $storage->load('gg_members_door') ?: $storage->create(['id' => 'gg_members_door', 'label' => 'Είσοδος']);
+  $role->grantPermission('record gg_members attendance');
+  $role->save();
+}
+
+/**
+ * Attendance itself: its table, and the "Είσοδος" role.
+ */
+function gg_members_attendance_update_10001(): void {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->tableExists('gg_members_attendance')) {
+    $schema->createTable('gg_members_attendance', gg_members_attendance_table());
+  }
+  gg_members_attendance_door_role();
+}

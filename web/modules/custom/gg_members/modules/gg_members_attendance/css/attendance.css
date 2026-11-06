@@ -1,0 +1,110 @@
+/* GG Members Attendance — the QR card on the profile, the cards list. */
+
+.gg-attendance-card {
+  text-align: center;
+}
+
+.gg-attendance-card h3 {
+  text-align: left;
+}
+
+.gg-attendance-card__qr {
+  display: block;
+  width: 160px;
+  height: 160px;
+  margin: 4px auto 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  image-rendering: pixelated;
+}
+
+.gg-attendance-card__status {
+  margin: 0 0 12px;
+  color: #6b7280;
+}
+
+.gg-attendance-card__status.is-sent {
+  color: #15803d;
+  font-weight: 600;
+}
+
+/* "Στείλε ξανά το QR με email": the main thing to do here, full width at
+   the bottom of the card. */
+.button.gg-attendance-card__send {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 12px 0 0;
+  text-align: center;
+}
+
+.gg-attendance-card__actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gg-attendance-card__actions .button {
+  margin: 0;
+}
+
+.gg-attendance__actions {
+  margin: 0 0 16px;
+}
+
+.gg-attendance__badge--pending {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.gg-attendance__badge--none {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+/* "Παρουσίες": ‹ day ›, the scanner button, the count, add by hand, the list. */
+.gg-attendance-day__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-bottom: 16px;
+}
+
+.gg-attendance-day__head .gg-members-month-nav {
+  margin: 0;
+}
+
+.button.gg-attendance-day__scan {
+  margin: 0;
+}
+
+.gg-attendance-day__add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 18px 20px;
+}
+
+.gg-attendance-day__add .form-item {
+  flex: 1;
+  min-width: 240px;
+  max-width: 480px;
+  margin: 0;
+}
+
+.gg-attendance-day__add .form-item select {
+  width: 100%;
+}
+
+.gg-attendance-day__add .button {
+  margin: 0;
+}
+
+.gg-attendance-day__list {
+  padding: 18px 20px;
+}

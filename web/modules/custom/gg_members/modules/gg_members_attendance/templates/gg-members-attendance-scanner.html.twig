@@ -1,0 +1,78 @@
+{#
+/**
+ * @file
+ * The scanner on the door device: the camera full screen, reading cards
+ * one after another (js/scanner.js), each answered by a coloured screen for
+ * a couple of seconds.
+ *
+ * Available variables:
+ * - club, today (how many came today so far), record_url, token_url (the CSRF token), jsqr_url,
+ *   scanner_js_url, back_url (to the Παρουσιολόγιο tab, for the coach;
+ *   NULL for the door account).
+ */
+#}
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0f172a">
+  <title>{{ 'Σκανάρισμα'|t }} — {{ club }}</title>
+  {% include '@gg_members_attendance/gg-members-attendance-door.css.twig' %}
+  <style>
+    .camera { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000; }
+    .frame { position: fixed; top: 50%; left: 50%; width: min(70vw, 70vh); aspect-ratio: 1; transform: translate(-50%, -50%); border: 4px solid rgba(255,255,255,.9); border-radius: 24px; box-shadow: 0 0 0 100vmax rgba(15,23,42,.45); }
+    .bar { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; background: linear-gradient(rgba(15,23,42,.85), rgba(15,23,42,0)); }
+    .bar__club { font-weight: 800; letter-spacing: .03em; }
+    .bar__count { font-size: .95rem; opacity: .9; }
+    .bar a { color: #fff; }
+    .hint { position: fixed; left: 0; right: 0; bottom: 0; padding: 18px; background: linear-gradient(rgba(15,23,42,0), rgba(15,23,42,.85)); text-align: center; font-size: 1.15rem; font-weight: 600; }
+    .start, .error { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; background: #0f172a; text-align: center; }
+    .start button { padding: 18px 34px; border: 0; border-radius: 14px; background: #1d4ed8; color: #fff; font: inherit; font-size: 1.3rem; font-weight: 700; }
+    .error p { max-width: 420px; margin: 0; line-height: 1.5; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <video class="camera" playsinline muted></video>
+  <div class="frame" aria-hidden="true"></div>
+  <div class="bar">
+    <span class="bar__club">{{ club }}</span>
+    <span class="bar__count" data-count>{{ 'Σήμερα: @count'|t({'@count': today}) }}</span>
+    {% if back_url %}<a href="{{ back_url }}">{{ 'Έξοδος'|t }}</a>{% endif %}
+  </div>
+  <p class="hint">{{ 'Δείξε την κάρτα σου στην κάμερα'|t }}</p>
+
+  {# Browsers start the camera (and sound) only after a tap. #}
+  <div class="start" data-start>
+    <p style="margin:0;font-size:1.4rem;font-weight:800;">{{ club }}</p>
+    <button type="button">{{ 'Έναρξη σκαναρίσματος'|t }}</button>
+  </div>
+  <div class="error" data-error hidden>
+    <p data-error-text></p>
+    <button type="button" onclick="location.reload()" style="padding:14px 26px;border:0;border-radius:12px;background:#1d4ed8;color:#fff;font:inherit;font-weight:700;">{{ 'Ξανά'|t }}</button>
+  </div>
+  <div data-result hidden></div>
+
+  <script>
+    window.ggScanner = {
+      recordUrl: {{ record_url|json_encode|raw }},
+      tokenUrl: {{ token_url|json_encode|raw }},
+      jsqrUrl: {{ jsqr_url|json_encode|raw }},
+      text: {
+        count: {{ 'Σήμερα: @count'|t|json_encode|raw }},
+        noCamera: {{ 'Δεν άνοιξε η κάμερα. Επιτρέψτε την πρόσβαση στην κάμερα για αυτή τη σελίδα (το εικονίδιο δίπλα στη διεύθυνση) και πατήστε «Ξανά».'|t|json_encode|raw }},
+        insecure: {{ 'Η κάμερα ανοίγει μόνο σε ασφαλή σύνδεση (https://).'|t|json_encode|raw }},
+        offline: {{ 'Δεν υπάρχει σύνδεση. Δοκίμασε ξανά.'|t|json_encode|raw }},
+        welcome: {{ 'Καλώς ήρθες!'|t|json_encode|raw }},
+        seeCoach: {{ 'Πέρασε από τον προπονητή.'|t|json_encode|raw }},
+        again: {{ 'Έχεις ήδη περαστεί σήμερα'|t|json_encode|raw }},
+        inactive: {{ 'Ανενεργό μέλος'|t|json_encode|raw }},
+        unknown: {{ 'Άγνωστη ή παλιά κάρτα'|t|json_encode|raw }}
+      }
+    };
+  </script>
+  <script src="{{ scanner_js_url }}"></script>
+</body>
+</html>

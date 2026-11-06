@@ -346,6 +346,9 @@ class MemberForm extends FormBase {
       $id = $this->memberManager->createMember($data);
       $this->messenger()->addStatus($this->t('Το μέλος προστέθηκε.'));
     }
+    // For submit handlers other modules add after this one (e.g. the
+    // attendance card's "send by email").
+    $form_state->set('gg_members_saved', ['id' => (int) $id, 'new' => !$form_state->getValue('id')]);
 
     foreach ([
       'doctor_note' => 'doctor_note_fids',

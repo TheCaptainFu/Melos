@@ -1,0 +1,43 @@
+{#
+/**
+ * @file
+ * A member's card as its holder opens it (from the email): the QR big
+ * enough to scan off a phone at the door, the member's name, the class —
+ * the same on screen as printed — and a print button under it. A page of
+ * its own, outside the site's theme.
+ *
+ * Available variables:
+ * - name (first and last), class_name, club, qr_url.
+ */
+#}
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>{{ 'Κάρτα παρουσίας'|t }} — {{ name }}</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 20px; background: #f3f4f6; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #111827; }
+    /* The card looks the same on screen as on paper. */
+    .card { width: 100%; max-width: 360px; padding: 26px 24px 24px; border: 1px solid #d1d5db; border-radius: 20px; background: #fff; text-align: center; }
+    .club { margin: 0 0 14px; font-size: .85rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #374151; }
+    .qr { display: block; width: 100%; max-width: 280px; height: auto; margin: 0 auto; image-rendering: pixelated; }
+    .name { margin: 16px 0 2px; font-size: 1.6rem; font-weight: 800; }
+    .class { margin: 0; color: #4b5563; }
+    .print { padding: 12px 28px; border: 0; border-radius: 10px; background: #1d4ed8; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+    .print:hover, .print:focus-visible { background: #1e40af; }
+    @media print { body { min-height: 0; background: #fff; } .print { display: none; } }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <p class="club">{{ club }}</p>
+    <img class="qr" src="{{ qr_url }}" alt="{{ 'Κωδικός QR'|t }}" width="280" height="280">
+    <p class="name">{{ name }}</p>
+    {% if class_name %}<p class="class">{{ class_name }}</p>{% endif %}
+  </main>
+  <button type="button" class="print" onclick="window.print()">{{ 'Εκτύπωση'|t }}</button>
+</body>
+</html>
