@@ -635,3 +635,39 @@ function gg_members_update_10011(): void {
   $config = \Drupal::configFactory()->getEditable('gg_members.settings');
   $config->clear('club_name')->clear('reminder_template')->save();
 }
+
+/**
+ * GDPR: when the data-processing consent was signed, and whether photos may
+ * be published.
+ */
+function gg_members_update_10012(): void {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->fieldExists('gg_members_member', 'consent_date')) {
+    $schema->addField('gg_members_member', 'consent_date', [
+      'type' => 'varchar',
+      'length' => 10,
+      'not null' => FALSE,
+      'description' => 'ISO date YYYY-MM-DD the member (or guardian) signed the data-processing consent.',
+    ]);
+  }
+  if (!$schema->fieldExists('gg_members_member', 'photo_consent')) {
+    $schema->addField('gg_members_member', 'photo_consent', [
+      'type' => 'int',
+      'size' => 'tiny',
+      'not null' => FALSE,
+      'description' => 'Photos on site/social media: 1 yes, 0 no, NULL not asked yet.',
+    ]);
+  }
+}
+
+/**
+ * Removes the GDPR consent fields again (consents are kept on paper).
+ */
+function gg_members_update_10013(): void {
+  $schema = \Drupal::database()->schema();
+  foreach (['consent_date', 'photo_consent'] as $field) {
+    if ($schema->fieldExists('gg_members_member', $field)) {
+      $schema->dropField('gg_members_member', $field);
+    }
+  }
+}
