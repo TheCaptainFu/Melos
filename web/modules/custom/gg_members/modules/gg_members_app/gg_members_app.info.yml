@@ -1,0 +1,7 @@
+name: GG Members App
+type: module
+description: 'Program only (μόνο πρόγραμμα): no public website — every page asks to log in, and the club lands on the members. Leave it off for sites that are also the club''s website.'
+core_version_requirement: ^10||^11
+package: Custom
+dependencies:
+  - gg_members:gg_members

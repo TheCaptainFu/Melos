@@ -1,0 +1,54 @@
+<?php
+
+/**
+ * @file
+ * Program only: switches the site's look and front page, and back again.
+ */
+
+use Drupal\user\Entity\Role;
+
+/**
+ * Implements hook_install().
+ *
+ * The admin look (Claro) for every page and the members as the front
+ * page; what was there before is kept so uninstalling restores it.
+ */
+function gg_members_app_install($is_syncing) {
+  if ($is_syncing) {
+    return;
+  }
+  $theme = \Drupal::configFactory()->getEditable('system.theme');
+  $site = \Drupal::configFactory()->getEditable('system.site');
+  \Drupal::state()->set('gg_members_app.previous', [
+    'theme' => $theme->get('default'),
+    'front' => $site->get('page.front'),
+  ]);
+  \Drupal::service('theme_installer')->install(['claro']);
+  $theme->set('default', 'claro')->save();
+  $site->set('page.front', '/admin/members')->save();
+
+  if (!Role::load('gg_members_club')) {
+    Role::create(['id' => 'gg_members_club', 'label' => 'Διαχειριστής συλλόγου'])->save();
+  }
+  gg_members_app_grant_permissions();
+  // Pages cached for visitors before would skip the login.
+  \Drupal::cache('page')->deleteAll();
+}
+
+/**
+ * Implements hook_uninstall().
+ *
+ * The website comes back as it was. The club's role stays, so its
+ * account keeps working on the members.
+ */
+function gg_members_app_uninstall($is_syncing) {
+  $previous = \Drupal::state()->get('gg_members_app.previous');
+  if ($previous && !$is_syncing) {
+    if (\Drupal::service('theme_handler')->themeExists($previous['theme'])) {
+      \Drupal::configFactory()->getEditable('system.theme')->set('default', $previous['theme'])->save();
+    }
+    \Drupal::configFactory()->getEditable('system.site')->set('page.front', $previous['front'])->save();
+  }
+  \Drupal::state()->delete('gg_members_app.previous');
+  \Drupal::cache('page')->deleteAll();
+}

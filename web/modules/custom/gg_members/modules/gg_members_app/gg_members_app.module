@@ -1,0 +1,164 @@
+<?php
+
+/**
+ * @file
+ * Program only: the members program without the club's public website.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Url;
+
+/**
+ * Implements hook_user_login().
+ *
+ * The club goes straight to the members after logging in (the door
+ * account still goes to the scanner, see gg_members_attendance).
+ */
+function gg_members_app_user_login(AccountInterface $account) {
+  if (!$account->hasPermission('administer gg_members')) {
+    return;
+  }
+  $request = \Drupal::request();
+  if (!$request->query->has('destination')) {
+    $request->query->set('destination', Url::fromRoute('gg_members.dashboard')->toString());
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for the login form.
+ *
+ * The club's name above the login, in Greek, so it reads as the club's
+ * program.
+ */
+function gg_members_app_form_user_login_form_alter(array &$form, FormStateInterface $form_state) {
+  $form['name']['#title'] = t('Όνομα χρήστη');
+  $form['name']['#description'] = '';
+  $form['pass']['#title'] = t('Κωδικός');
+  $form['pass']['#description'] = '';
+  $form['actions']['submit']['#value'] = t('Σύνδεση');
+  $form['actions']['submit']['#button_type'] = 'primary';
+  $form['gg_members_app_forgot'] = [
+    '#type' => 'link',
+    '#title' => t('Ξέχασα τον κωδικό μου'),
+    '#url' => Url::fromRoute('user.pass'),
+    '#weight' => 200,
+    '#prefix' => '<p>',
+    '#suffix' => '</p>',
+  ];
+  $form['gg_members_app_club'] = [
+    '#markup' => '<h2 class="gg-members-app-club">' . \Drupal\Component\Utility\Html::escape(\Drupal::config('system.site')->get('name')) . '</h2>',
+    '#weight' => -100,
+    '#cache' => ['tags' => ['config:system.site']],
+  ];
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for page_title.
+ */
+function gg_members_app_preprocess_page_title(array &$variables) {
+  $titles = [
+    'user.login' => t('Σύνδεση'),
+    'user.pass' => t('Ξέχασα τον κωδικό μου'),
+  ];
+  $route = \Drupal::routeMatch()->getRouteName();
+  if (isset($titles[$route])) {
+    $variables['title'] = $titles[$route];
+  }
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for breadcrumb.
+ *
+ * "Home" means nothing before logging in.
+ */
+function gg_members_app_preprocess_breadcrumb(array &$variables) {
+  if (\Drupal::currentUser()->isAnonymous()) {
+    $variables['breadcrumb'] = [];
+  }
+}
+
+/**
+ * Implements hook_modules_installed().
+ *
+ * An extra switched on later: give the club's account its pages too.
+ */
+function gg_members_app_modules_installed(array $modules, $is_syncing) {
+  if (!$is_syncing) {
+    gg_members_app_grant_permissions();
+  }
+}
+
+/**
+ * The club's role gets the program's permissions — the ones that exist,
+ * i.e. of the extras this site has.
+ */
+function gg_members_app_grant_permissions(): void {
+  $role = \Drupal\user\Entity\Role::load('gg_members_club');
+  if (!$role) {
+    return;
+  }
+  $available = \Drupal::service('user.permissions')->getPermissions();
+  foreach (GG_MEMBERS_APP_PERMISSIONS as $permission) {
+    if (isset($available[$permission]) && !$role->hasPermission($permission)) {
+      $role->grantPermission($permission);
+    }
+  }
+  $role->save();
+}
+
+/**
+ * Everything the club needs, nothing of Drupal's own administration.
+ */
+const GG_MEMBERS_APP_PERMISSIONS = [
+  'administer gg_members',
+  'manage gg_members attendance',
+  'record gg_members attendance',
+  'access toolbar',
+  'access taxonomy overview',
+  'create terms in gg_members_class',
+  'edit terms in gg_members_class',
+  'delete terms in gg_members_class',
+];
+
+/**
+ * Implements hook_menu_local_tasks_alter().
+ *
+ * No "Log in / Reset password" tabs: the form has its own link, and the
+ * site has no registration.
+ */
+function gg_members_app_menu_local_tasks_alter(array &$data, $route_name) {
+  if (in_array($route_name, ['user.login', 'user.pass'], TRUE)) {
+    $data['tabs'] = [];
+  }
+}
+
+/**
+ * Implements hook_toolbar_alter().
+ *
+ * The club's account has none of Drupal's administration, so no empty
+ * "Manage" tray — just its name and the members' own tab.
+ */
+function gg_members_app_toolbar_alter(array &$items) {
+  if (!\Drupal::currentUser()->hasPermission('access administration pages')) {
+    unset($items['administration']);
+  }
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for links__toolbar_user.
+ *
+ * The account links under the user's name, in Greek.
+ */
+function gg_members_app_preprocess_links__toolbar_user(array &$variables) {
+  $titles = [
+    'account' => t('Το προφίλ μου'),
+    'account_edit' => t('Αλλαγή κωδικού'),
+    'logout' => t('Αποσύνδεση'),
+  ];
+  foreach ($titles as $key => $title) {
+    if (isset($variables['links'][$key]['link']['#title'])) {
+      $variables['links'][$key]['link']['#title'] = $title;
+    }
+  }
+}

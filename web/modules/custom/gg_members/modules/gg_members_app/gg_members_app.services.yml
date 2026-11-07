@@ -1,0 +1,6 @@
+services:
+  gg_members_app.login_wall:
+    class: Drupal\gg_members_app\EventSubscriber\LoginWall
+    arguments: ['@current_user']
+    tags:
+      - { name: event_subscriber }
