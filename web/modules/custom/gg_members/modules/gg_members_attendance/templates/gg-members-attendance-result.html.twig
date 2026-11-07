@@ -5,7 +5,7 @@
  * (server-side) and, as a template for its markup, the scanner's script.
  *
  * Available variables:
- * - result: state ('ok', 'warn', 'again', 'inactive', 'unknown'), name,
+ * - result: state ('ok', 'again', 'inactive', 'unknown'), name,
  *   class_name, photo (data: URI), time.
  */
 #}
@@ -24,9 +24,6 @@
     {% if result.state == 'ok' %}
       <p class="result__title">{{ 'Καλώς ήρθες!'|t }}</p>
       <p class="result__note">{{ result.time }}</p>
-    {% elseif result.state == 'warn' %}
-      <p class="result__title">{{ 'Καλώς ήρθες!'|t }}</p>
-      <p class="result__note">{{ 'Πέρασε από τον προπονητή.'|t }}</p>
     {% elseif result.state == 'again' %}
       <p class="result__title">{{ 'Έχεις ήδη περαστεί σήμερα'|t }}</p>
       <p class="result__note">{{ '@time'|t({'@time': result.time}) }}</p>

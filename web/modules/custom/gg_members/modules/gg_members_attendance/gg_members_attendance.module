@@ -6,6 +6,7 @@
  */
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Drupal\gg_members\MemberManager;
 
@@ -34,6 +35,7 @@ function gg_members_attendance_theme() {
         'sent' => NULL,
         'send_url' => NULL,
         'renew_url' => NULL,
+        'attendance' => NULL,
       ],
     ],
     'gg_members_attendance_card_page' => [
@@ -70,6 +72,20 @@ function gg_members_attendance_theme() {
         'jsqr_url' => NULL,
         'scanner_js_url' => NULL,
         'back_url' => NULL,
+      ],
+    ],
+    'gg_members_attendance_month' => [
+      'template' => 'gg-members-attendance-month',
+      'variables' => [
+        'grid' => [],
+        'label' => NULL,
+        'previous_url' => NULL,
+        'next_url' => NULL,
+        'current_url' => NULL,
+        'classes' => [],
+        'class_tid' => 0,
+        'month' => NULL,
+        'export_url' => NULL,
       ],
     ],
     'gg_members_attendance_email' => [
@@ -114,6 +130,7 @@ function gg_members_attendance_gg_members_profile_alter(array &$build, \stdClass
     '#sent' => $sent ? ['date' => date('d/m/Y H:i', $sent['sent']), 'to' => $sent['sent_to']] : NULL,
     '#send_url' => $action('gg_members_attendance.send'),
     '#renew_url' => $action('gg_members_attendance.renew'),
+    '#attendance' => gg_members_attendance_profile_summary($id),
   ];
   $build['#attached']['library'][] = 'gg_members_attendance/admin';
 }
@@ -174,4 +191,36 @@ function gg_members_attendance_member_form_submit(array &$form, FormStateInterfa
 function gg_members_attendance_gg_members_member_delete(int $id) {
   \Drupal::database()->delete('gg_members_qr')->condition('member_id', $id)->execute();
   \Drupal::database()->delete('gg_members_attendance')->condition('member_id', $id)->execute();
+}
+
+/**
+ * Implements hook_user_login().
+ *
+ * The door device's account ("Είσοδος": may scan, nothing else) goes
+ * straight to the scanner after logging in, unless the login link says
+ * where to go.
+ */
+function gg_members_attendance_user_login(AccountInterface $account) {
+  if (!$account->hasPermission('record gg_members attendance') || $account->hasPermission('manage gg_members attendance')) {
+    return;
+  }
+  $request = \Drupal::request();
+  if (!$request->query->has('destination')) {
+    $request->query->set('destination', Url::fromRoute('gg_members_attendance.scan')->toString());
+  }
+}
+
+/**
+ * "Ήρθε 9 φορές τον Νοέμβριο · τελευταία 06/11", for the profile.
+ */
+function gg_members_attendance_profile_summary(int $memberId): array {
+  $summary = \Drupal::service('gg_members_attendance.attendance')->memberSummary($memberId);
+  $last = $summary['last'] ? \DateTimeImmutable::createFromFormat('Y-m-d', $summary['last']) : NULL;
+  return [
+    'count' => $summary['count'],
+    // Accusative: "τον Νοέμβριο".
+    'month' => mb_substr(MemberManager::MONTH_NAMES[(int) date('n')], 0, -1),
+    'last' => $last ? $last->format('d/m/Y') : NULL,
+    'month_url' => Url::fromRoute('gg_members_attendance.month')->toString(),
+  ];
 }

@@ -12,6 +12,12 @@ gg_members_attendance.tab.day:
   title: 'Παρουσίες'
   weight: 0
 
+gg_members_attendance.tab.month:
+  route_name: gg_members_attendance.month
+  parent_id: gg_members_attendance.tab
+  title: 'Μήνας'
+  weight: 5
+
 gg_members_attendance.tab.cards:
   route_name: gg_members_attendance.cards
   parent_id: gg_members_attendance.tab

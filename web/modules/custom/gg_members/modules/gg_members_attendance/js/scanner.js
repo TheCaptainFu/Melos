@@ -2,7 +2,7 @@
  * @file
  * The door scanner: reads cards from the camera one after another, sends
  * each to the site (which records the attendance), and shows the answer —
- * green, orange, blue or red, with a beep — for a few seconds.
+ * green, blue or red, with a beep — for a few seconds.
  *
  * Reads with the browser's own BarcodeDetector where there is one (Chrome
  * on Android), else with jsQR (loaded only then). The same card held up
@@ -127,8 +127,8 @@
       if (result.class_name) {
         box.appendChild(element('p', 'result__class', result.class_name));
       }
-      var titles = { ok: text.welcome, warn: text.welcome, again: text.again, inactive: text.inactive };
-      var notes = { ok: result.time, warn: text.seeCoach, again: result.time, inactive: text.seeCoach };
+      var titles = { ok: text.welcome, again: text.again, inactive: text.inactive };
+      var notes = { ok: result.time, again: result.time, inactive: text.seeCoach };
       box.appendChild(element('p', 'result__title', titles[result.state]));
       box.appendChild(element('p', 'result__note', notes[result.state]));
     }

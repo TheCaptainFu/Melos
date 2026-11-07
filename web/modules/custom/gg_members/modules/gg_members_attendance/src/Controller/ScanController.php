@@ -56,7 +56,7 @@ class ScanController extends ControllerBase {
       '#record_url' => Url::fromRoute('gg_members_attendance.scan_record')->toString(),
       '#token_url' => Url::fromRoute('system.csrftoken')->toString(),
       '#jsqr_url' => base_path() . $this->moduleHandler()->getModule('gg_members_attendance')->getPath() . '/js/vendor/jsqr/jsQR.js',
-      '#scanner_js_url' => base_path() . $this->moduleHandler()->getModule('gg_members_attendance')->getPath() . '/js/scanner.js?v=1',
+      '#scanner_js_url' => base_path() . $this->moduleHandler()->getModule('gg_members_attendance')->getPath() . '/js/scanner.js?v=2',
       '#back_url' => $this->currentUser()->hasPermission('manage gg_members attendance') ? Url::fromRoute('gg_members_attendance.today')->toString() : NULL,
     ]);
   }

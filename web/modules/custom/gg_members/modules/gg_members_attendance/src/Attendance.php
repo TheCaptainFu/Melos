@@ -34,10 +34,9 @@ class Attendance {
    *   What the QR held: the card's link, or the bare code.
    *
    * @return array
-   *   state: 'ok' (in), 'warn' (in, but the coach should have a word —
-   *   no reason shown at the door), 'again' (already in today), 'inactive',
-   *   'unknown'; and for a known member: name, class_name, photo (a small
-   *   data: URI, or NULL), time ('H:i').
+   *   state: 'ok' (in), 'again' (already in today), 'inactive', 'unknown';
+   *   and for a known member: name, class_name, photo (a small data: URI,
+   *   or NULL), time ('H:i').
    */
   public function scan(string $scanned): array {
     $token = QrCards::tokenFromScan($scanned);
@@ -61,7 +60,7 @@ class Attendance {
     if (!$recorded['new']) {
       return ['state' => 'again'] + $result;
     }
-    return ['state' => $this->issues($memberId) ? 'warn' : 'ok'] + $result;
+    return ['state' => 'ok'] + $result;
   }
 
   /**
@@ -102,6 +101,73 @@ class Attendance {
     return (int) $this->database->query('SELECT COUNT(*) FROM {gg_members_attendance} WHERE attended = :date', [':date' => $date])->fetchField();
   }
 
+  /**
+   * A month as a grid: who came on which day.
+   *
+   * @param string $month
+   *   'YYYY-MM'.
+   * @param int $classTid
+   *   Only this class (0 = all).
+   *
+   * @return array
+   *   days: day number => ['weekday' => 0 (Sunday)–6, 'future' => bool,
+   *   'total' => how many came]; members: name, class_name, member_id,
+   *   days (day number => TRUE when they came), total. Active members, and
+   *   anyone else who came that month.
+   */
+  public function month(string $month, int $classTid = 0): array {
+    $first = new \DateTimeImmutable($month . '-01');
+    $last = (int) $first->format('t');
+    $today = date('Y-m-d', $this->time->getRequestTime());
+
+    $came = [];
+    $query = $this->database->select('gg_members_attendance', 'a')->fields('a', ['member_id', 'attended']);
+    $query->condition('a.attended', [$first->format('Y-m-01'), $first->format('Y-m-') . $last], 'BETWEEN');
+    if ($classTid) {
+      $query->condition('a.class_tid', $classTid);
+    }
+    foreach ($query->execute() as $row) {
+      $came[(int) $row->member_id][(int) substr($row->attended, 8, 2)] = TRUE;
+    }
+
+    $days = [];
+    for ($day = 1; $day <= $last; $day++) {
+      $date = $first->setDate((int) $first->format('Y'), (int) $first->format('n'), $day);
+      $days[$day] = ['weekday' => (int) $date->format('w'), 'future' => $date->format('Y-m-d') > $today, 'total' => 0];
+    }
+
+    $members = [];
+    foreach ($this->memberManager->membersQuery(array_filter(['class_tid' => $classTid]))->execute() as $member) {
+      $id = (int) $member->id;
+      if (!$member->status && empty($came[$id])) {
+        continue;
+      }
+      $members[] = [
+        'member_id' => $id,
+        'name' => $member->name,
+        'class_name' => $member->class_name,
+        'days' => $came[$id] ?? [],
+        'total' => count($came[$id] ?? []),
+      ];
+      foreach (array_keys($came[$id] ?? []) as $day) {
+        $days[$day]['total']++;
+      }
+    }
+    return ['days' => $days, 'members' => $members];
+  }
+
+  /**
+   * A member's attendance in a month (this month by default): how many
+   * times, and the last day ('YYYY-MM-DD', or NULL) they came at all.
+   */
+  public function memberSummary(int $memberId, ?string $month = NULL): array {
+    $month = $month ?: date('Y-m', $this->time->getRequestTime());
+    return [
+      'count' => (int) $this->database->query('SELECT COUNT(*) FROM {gg_members_attendance} WHERE member_id = :id AND attended LIKE :month', [':id' => $memberId, ':month' => $month . '-%'])->fetchField(),
+      'last' => $this->database->query('SELECT MAX(attended) FROM {gg_members_attendance} WHERE member_id = :id', [':id' => $memberId])->fetchField() ?: NULL,
+    ];
+  }
+
   public function delete(int $id): void {
     $this->database->delete('gg_members_attendance')->condition('id', $id)->execute();
   }
@@ -110,8 +176,7 @@ class Attendance {
    * Everyone who came on a day, latest first.
    *
    * @return array
-   *   Rows: id, member_id, name, class_name, time ('H:i'), method, issues
-   *   (see issues()).
+   *   Rows: id, member_id, name, class_name, time ('H:i'), method.
    */
   public function day(string $date): array {
     $rows = $this->database->query(
@@ -131,30 +196,7 @@ class Attendance {
       'class_name' => $row->class_name,
       'time' => date('H:i', (int) $row->created),
       'method' => $row->method,
-      'issues' => $this->issues((int) $row->member_id),
     ], $rows);
-  }
-
-  /**
-   * What the coach should know about a member at the door: months left
-   * unpaid, a missing doctor's note. Never shown on the door screen itself.
-   *
-   * The month under way doesn't count: early in the month nearly everyone
-   * hasn't paid it yet.
-   *
-   * @return string[]
-   */
-  public function issues(int $memberId): array {
-    $issues = [];
-    $thisMonth = date('Y-m', $this->time->getRequestTime());
-    $unpaid = count(array_filter($this->memberManager->getUnpaidMonths($memberId), fn($month) => $month < $thisMonth));
-    if ($unpaid) {
-      $issues[] = (string) \Drupal::translation()->formatPlural($unpaid, 'Χρωστάει 1 μήνα', 'Χρωστάει @count μήνες');
-    }
-    if (!$this->memberManager->hasFiles($memberId, 'doctor_note')) {
-      $issues[] = (string) t('Λείπει χαρτί γιατρού');
-    }
-    return $issues;
   }
 
   /**

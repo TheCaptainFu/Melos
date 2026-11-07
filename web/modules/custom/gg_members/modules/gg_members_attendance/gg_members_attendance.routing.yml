@@ -100,3 +100,19 @@ gg_members_attendance.renew:
     _permission: 'manage gg_members attendance'
     _csrf_token: 'TRUE'
     member: \d+
+
+# "Μήνας": members × days, and the same as a CSV for Excel.
+gg_members_attendance.month:
+  path: '/admin/members/attendance/month'
+  defaults:
+    _controller: '\Drupal\gg_members_attendance\Controller\MonthController::page'
+    _title: 'Παρουσιολόγιο'
+  requirements:
+    _permission: 'manage gg_members attendance'
+
+gg_members_attendance.month_export:
+  path: '/admin/members/attendance/month/export'
+  defaults:
+    _controller: '\Drupal\gg_members_attendance\Controller\MonthController::export'
+  requirements:
+    _permission: 'manage gg_members attendance'

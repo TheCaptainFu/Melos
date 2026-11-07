@@ -10,10 +10,18 @@
  * - email: the member's email, if valid.
  * - sent: date, to — when and where the card was last emailed, if ever.
  * - send_url, renew_url: the actions.
+ * - attendance: count (this month), month (accusative), last (dd/mm/YYYY
+ *   or NULL), month_url.
  */
 #}
 <div class="gg-members-card gg-members-profile__section gg-attendance-card">
   <h3>{{ 'Κάρτα παρουσίας'|t }}</h3>
+  {% if attendance %}
+    <p class="gg-attendance-card__summary">
+      <a href="{{ attendance.month_url }}">{{ attendance.count == 1 ? 'Ήρθε 1 φορά τον @month'|t({'@month': attendance.month}) : 'Ήρθε @count φορές τον @month'|t({'@count': attendance.count, '@month': attendance.month}) }}</a>
+      {% if attendance.last %}<span>{{ 'τελευταία @date'|t({'@date': attendance.last}) }}</span>{% endif %}
+    </p>
+  {% endif %}
   <img class="gg-attendance-card__qr" src="{{ qr_url }}" alt="{{ 'Κωδικός QR'|t }}" width="160" height="160">
 
   {% if sent %}
