@@ -28,8 +28,7 @@ function gg_members_app_user_login(AccountInterface $account) {
 /**
  * Implements hook_form_FORM_ID_alter() for the login form.
  *
- * The club's name above the login, in Greek, so it reads as the club's
- * program.
+ * In Greek (the page around it: page--gg-members-app-login).
  */
 function gg_members_app_form_user_login_form_alter(array &$form, FormStateInterface $form_state) {
   $form['name']['#title'] = t('Όνομα χρήστη');
@@ -37,20 +36,138 @@ function gg_members_app_form_user_login_form_alter(array &$form, FormStateInterf
   $form['pass']['#title'] = t('Κωδικός');
   $form['pass']['#description'] = '';
   $form['actions']['submit']['#value'] = t('Σύνδεση');
+  $form['#validate'][] = 'gg_members_app_login_validate';
   $form['actions']['submit']['#button_type'] = 'primary';
   $form['gg_members_app_forgot'] = [
     '#type' => 'link',
     '#title' => t('Ξέχασα τον κωδικό μου'),
     '#url' => Url::fromRoute('user.pass'),
     '#weight' => 200,
-    '#prefix' => '<p>',
+    '#prefix' => '<p class="gg-login__forgot">',
     '#suffix' => '</p>',
   ];
-  $form['gg_members_app_club'] = [
-    '#markup' => '<h2 class="gg-members-app-club">' . \Drupal\Component\Utility\Html::escape(\Drupal::config('system.site')->get('name')) . '</h2>',
-    '#weight' => -100,
-    '#cache' => ['tags' => ['config:system.site']],
+}
+
+/**
+ * Wrong username or password (or too many tries): said in Greek.
+ */
+function gg_members_app_login_validate(array &$form, FormStateInterface $form_state) {
+  $errors = $form_state->getErrors();
+  if (!isset($errors['name'])) {
+    return;
+  }
+  $blocked = str_contains((string) $errors['name'], 'blocked') || str_contains((string) $errors['name'], 'failed login');
+  $form_state->clearErrors();
+  foreach ($errors as $name => $error) {
+    if ($name !== 'name') {
+      $form_state->setErrorByName($name, $error);
+    }
+  }
+  $form_state->setErrorByName('name', $blocked
+    ? t('Πολλές λάθος προσπάθειες. Δοκιμάστε ξανά αργότερα ή πατήστε «Ξέχασα τον κωδικό μου».')
+    : t('Λάθος όνομα χρήστη ή κωδικός.'));
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for the forgotten password form.
+ */
+function gg_members_app_form_user_pass_alter(array &$form, FormStateInterface $form_state) {
+  $form['name']['#title'] = t('Email ή όνομα χρήστη');
+  $form['name']['#description'] = '';
+  unset($form['mail']);
+  $form['actions']['submit']['#value'] = t('Στείλε μου σύνδεσμο');
+  $form['actions']['submit']['#button_type'] = 'primary';
+  $form['gg_members_app_back'] = [
+    '#type' => 'link',
+    '#title' => t('← Πίσω στη σύνδεση'),
+    '#url' => Url::fromRoute('user.login'),
+    '#weight' => 200,
+    '#prefix' => '<p class="gg-login__forgot">',
+    '#suffix' => '</p>',
   ];
+}
+
+/**
+ * Implements hook_theme().
+ */
+function gg_members_app_theme() {
+  return [
+    'page__gg_members_app_login' => [
+      'base hook' => 'page',
+      'template' => 'page--gg-members-app-login',
+    ],
+  ];
+}
+
+/**
+ * The pages a visitor sees: logging in and a forgotten password.
+ */
+function gg_members_app_is_login_page(): bool {
+  return \Drupal::currentUser()->isAnonymous()
+    && in_array(\Drupal::routeMatch()->getRouteName(), ['user.login', 'user.pass'], TRUE);
+}
+
+/**
+ * Implements hook_theme_suggestions_HOOK_alter() for page.
+ */
+function gg_members_app_theme_suggestions_page_alter(array &$suggestions) {
+  if (gg_members_app_is_login_page()) {
+    $suggestions[] = 'page__gg_members_app_login';
+  }
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for page.
+ */
+function gg_members_app_preprocess_page(array &$variables) {
+  if (!gg_members_app_is_login_page()) {
+    return;
+  }
+  $club = (string) \Drupal::config('system.site')->get('name');
+  // The club's own logo, if its website theme had one.
+  $logo = NULL;
+  $previous = \Drupal::state()->get('gg_members_app.previous');
+  if (!empty($previous['theme']) && !theme_get_setting('logo.use_default', $previous['theme'])) {
+    $logo = theme_get_setting('logo.url', $previous['theme']) ?: NULL;
+  }
+  $variables['gg_login'] = [
+    'club' => $club,
+    'initial' => mb_strtoupper(mb_substr($club, 0, 1)),
+    'logo' => $logo,
+    'subtitle' => \Drupal::routeMatch()->getRouteName() === 'user.pass'
+      ? t('Γράψτε το email σας και θα σας στείλουμε σύνδεσμο για νέο κωδικό.')
+      : t('Διαχείριση μελών'),
+    'year' => date('Y'),
+  ];
+  $variables['#attached']['library'][] = 'gg_members_app/login';
+  $variables['#cache']['tags'][] = 'config:system.site';
+  $variables['#cache']['contexts'][] = 'route';
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for html.
+ *
+ * The tab's title: the club, not "Log in | site".
+ */
+function gg_members_app_preprocess_html(array &$variables) {
+  if (gg_members_app_is_login_page()) {
+    $variables['head_title'] = [
+      'title' => \Drupal::routeMatch()->getRouteName() === 'user.pass' ? t('Νέος κωδικός') : t('Σύνδεση'),
+      'name' => \Drupal::config('system.site')->get('name'),
+    ];
+  }
+}
+
+/**
+ * Implements hook_metatags_alter().
+ *
+ * Metatag sets the tab's title itself, where it's installed.
+ */
+function gg_members_app_metatags_alter(array &$metatags, array &$context) {
+  if (gg_members_app_is_login_page()) {
+    $title = \Drupal::routeMatch()->getRouteName() === 'user.pass' ? t('Νέος κωδικός') : t('Σύνδεση');
+    $metatags['title'] = $title . ' | [site:name]';
+  }
 }
 
 /**

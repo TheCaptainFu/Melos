@@ -1,0 +1,136 @@
+/* The program-only login: one card in the middle of the screen. */
+.gg-login {
+  min-height: 100vh;
+  min-height: 100dvh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 2rem 1rem;
+  background: linear-gradient(160deg, #eef2fb 0%, #f7f8fb 55%, #e8eefb 100%);
+}
+.gg-login__card {
+  width: 100%;
+  max-width: 400px;
+  box-sizing: border-box;
+  padding: 2.25rem 2rem 2rem;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 12px 32px rgba(16, 24, 40, .10);
+}
+.gg-login__brand {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+.gg-login__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: #003ecc;
+  color: #fff;
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin-bottom: .9rem;
+}
+.gg-login__logo {
+  display: block;
+  max-width: 120px;
+  max-height: 80px;
+  margin: 0 auto .9rem;
+}
+.gg-login__club {
+  margin: 0;
+  font-size: 1.4rem;
+  line-height: 1.25;
+  font-weight: 700;
+  color: #222330;
+  letter-spacing: .01em;
+}
+.gg-login__subtitle {
+  margin: .35rem 0 0;
+  hyphens: none;
+  color: #55565b;
+  font-size: .95rem;
+}
+.gg-login__form .form-item {
+  margin-top: 0;
+  margin-bottom: 1.1rem;
+}
+.gg-login__form .form-element {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  min-height: 3rem;
+  font-size: 1rem;
+  border-radius: 10px;
+}
+.gg-login__form .form-actions {
+  margin: 1.5rem 0 0;
+}
+.gg-login__form .form-actions .button {
+  width: 100%;
+  margin: 0;
+  min-height: 3rem;
+  font-size: 1rem;
+  border-radius: 10px;
+}
+.gg-login__form .gg-login__forgot {
+  margin: 1.1rem 0 0;
+  text-align: center;
+  font-size: .9rem;
+}
+.gg-login__form .gg-login__forgot a {
+  color: #003ecc;
+  text-decoration: none;
+}
+.gg-login__form .gg-login__forgot a:hover,
+.gg-login__form .gg-login__forgot a:focus {
+  text-decoration: underline;
+}
+.gg-login .messages-list {
+  margin: 0 0 1.25rem;
+}
+/* Claro's dark message box, as a light one that fits the card. */
+.gg-login .messages {
+  margin: 0;
+  padding: .8rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #f5c2c2;
+  box-shadow: none;
+  background: #fdf1f1;
+  color: #8a1c1c;
+}
+.gg-login .messages--status {
+  border-color: #b7e4c7;
+  background: #effaf3;
+  color: #1d6b3a;
+}
+.gg-login .messages__header {
+  display: none;
+}
+.gg-login .messages__content {
+  margin: 0;
+  font-size: .95rem;
+}
+.gg-login .messages a {
+  color: inherit;
+}
+.gg-login__footer {
+  margin: 0;
+  color: #82828c;
+  font-size: .8rem;
+}
+@media (max-width: 480px) {
+  .gg-login {
+    justify-content: flex-start;
+    padding-top: 3rem;
+  }
+  .gg-login__card {
+    padding: 1.75rem 1.25rem 1.5rem;
+  }
+}

@@ -1,0 +1,28 @@
+{#
+/**
+ * @file
+ * The login (and forgotten password) page of a program-only site: just the
+ * club and the form, nothing of Drupal around it.
+ *
+ * Variables: gg_login.club, gg_login.initial, gg_login.logo (or NULL),
+ * gg_login.subtitle, gg_login.year.
+ */
+#}
+<main class="gg-login" lang="el">
+  <div class="gg-login__card">
+    <div class="gg-login__brand">
+      {% if gg_login.logo %}
+        <img class="gg-login__logo" src="{{ gg_login.logo }}" alt="">
+      {% else %}
+        <span class="gg-login__mark" aria-hidden="true">{{ gg_login.initial }}</span>
+      {% endif %}
+      <h1 class="gg-login__club">{{ gg_login.club }}</h1>
+      <p class="gg-login__subtitle">{{ gg_login.subtitle }}</p>
+    </div>
+    {{ page.highlighted }}
+    <div class="gg-login__form">
+      {{ page.content }}
+    </div>
+  </div>
+  <p class="gg-login__footer">© {{ gg_login.year }} {{ gg_login.club }}</p>
+</main>
