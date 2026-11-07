@@ -1,11 +1,13 @@
 <?php
 
-namespace Drupal\gg_members\Controller;
+namespace Drupal\gg_members_stats\Controller;
 
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Url;
-use Drupal\gg_members\ExpenseManager;
-use Drupal\gg_members\MemberStats;
+use Drupal\gg_members_expenses\ExpenseManager;
+use Drupal\gg_members_stats\MemberStats;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -15,16 +17,29 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class MemberStatsController extends ControllerBase {
 
+  /**
+   * @param \Drupal\gg_members_expenses\ExpenseManager|null $expenses
+   *   NULL without the Expenses module (then only the income page exists).
+   */
   public function __construct(
     protected MemberStats $memberStats,
-    protected ExpenseManager $expenses,
+    protected ?ExpenseManager $expenses,
   ) {}
 
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('gg_members.stats'),
-      $container->get('gg_members.expenses'),
+      $container->has('gg_members.expenses') ? $container->get('gg_members.expenses') : NULL,
     );
+  }
+
+  /**
+   * The expenses analysis and the profit are there only with the Expenses
+   * module.
+   */
+  public static function expensesAccess(): AccessResultInterface {
+    return AccessResult::allowedIf(\Drupal::moduleHandler()->moduleExists('gg_members_expenses'))
+      ->addCacheTags(['config:core.extension']);
   }
 
   public function page(Request $request): array {
@@ -39,7 +54,7 @@ class MemberStatsController extends ControllerBase {
       '#monthly' => $this->memberStats->monthly($chartHistory),
       '#by_class' => $this->memberStats->byClass($history),
       '#members' => $this->memberStats->members($history),
-      '#attached' => ['library' => ['gg_members/admin', 'gg_members/stats_chart']],
+      '#attached' => ['library' => ['gg_members/admin', 'gg_members_stats/chart']],
       '#cache' => ['max-age' => 0],
     ];
   }
@@ -57,7 +72,7 @@ class MemberStatsController extends ControllerBase {
       '#basics' => $this->memberStats->expenseBasics($history),
       '#monthly' => $this->memberStats->expenseMonthly($chartHistory),
       '#categories' => $this->memberStats->expensesByCategory($history),
-      '#attached' => ['library' => ['gg_members/admin', 'gg_members/stats_chart']],
+      '#attached' => ['library' => ['gg_members/admin', 'gg_members_stats/chart']],
       '#cache' => ['max-age' => 0],
     ];
   }
@@ -73,7 +88,7 @@ class MemberStatsController extends ControllerBase {
       '#chart' => $chart,
       '#basics' => $this->memberStats->profitBasics($history),
       '#monthly' => $this->memberStats->profitMonthly($chartHistory),
-      '#attached' => ['library' => ['gg_members/admin', 'gg_members/stats_chart']],
+      '#attached' => ['library' => ['gg_members/admin', 'gg_members_stats/chart']],
       '#cache' => ['max-age' => 0],
     ];
   }

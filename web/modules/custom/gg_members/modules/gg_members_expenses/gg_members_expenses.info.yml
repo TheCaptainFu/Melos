@@ -1,0 +1,7 @@
+name: GG Members Expenses
+type: module
+description: 'Expenses (Έξοδα): the club''s expenses month by month, and fixed monthly ones entered automatically. A paid extra — enable it only on sites that bought it.'
+core_version_requirement: ^10||^11
+package: Custom
+dependencies:
+  - gg_members:gg_members

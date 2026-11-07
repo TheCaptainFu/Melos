@@ -1,0 +1,7 @@
+services:
+  gg_members.stats:
+    class: Drupal\gg_members_stats\MemberStats
+    arguments:
+      - '@database'
+      - '@config.factory'
+      - '@gg_members.manager'

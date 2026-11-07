@@ -1,0 +1,9 @@
+services:
+  gg_members.expenses:
+    class: Drupal\gg_members_expenses\ExpenseManager
+    arguments:
+      - '@database'
+      - '@datetime.time'
+      - '@current_user'
+      - '@config.factory'
+      - '@lock'

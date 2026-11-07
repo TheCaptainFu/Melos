@@ -1,0 +1,28 @@
+<?php
+
+/**
+ * @file
+ * Hooks for GG Members Expenses.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\gg_members_expenses\RecurringSettings;
+
+/**
+ * Implements hook_cron().
+ *
+ * Enters the recurring expenses that have come due, so the books are up to
+ * date even before anyone opens the expenses tab.
+ */
+function gg_members_expenses_cron() {
+  \Drupal::service('gg_members.expenses')->generateRecurring();
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for gg_members_settings_form.
+ *
+ * The fixed monthly expenses ("Πάγια έξοδα") as a section of the settings.
+ */
+function gg_members_expenses_form_gg_members_settings_form_alter(array &$form, FormStateInterface $form_state) {
+  RecurringSettings::build($form);
+}

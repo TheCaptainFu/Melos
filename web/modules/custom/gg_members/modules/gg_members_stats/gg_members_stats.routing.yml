@@ -1,0 +1,27 @@
+gg_members.stats:
+  path: '/admin/members/stats'
+  defaults:
+    _controller: '\Drupal\gg_members_stats\Controller\MemberStatsController::page'
+    _title: 'Στατιστικά'
+  requirements:
+    _permission: 'administer gg_members'
+
+# The expenses analysis and the profit need the Expenses module too:
+# without it they're closed (and so are their tabs).
+gg_members.stats_expenses:
+  path: '/admin/members/stats/expenses'
+  defaults:
+    _controller: '\Drupal\gg_members_stats\Controller\MemberStatsController::expenses'
+    _title: 'Στατιστικά'
+  requirements:
+    _permission: 'administer gg_members'
+    _custom_access: '\Drupal\gg_members_stats\Controller\MemberStatsController::expensesAccess'
+
+gg_members.stats_profit:
+  path: '/admin/members/stats/profit'
+  defaults:
+    _controller: '\Drupal\gg_members_stats\Controller\MemberStatsController::profit'
+    _title: 'Στατιστικά'
+  requirements:
+    _permission: 'administer gg_members'
+    _custom_access: '\Drupal\gg_members_stats\Controller\MemberStatsController::expensesAccess'

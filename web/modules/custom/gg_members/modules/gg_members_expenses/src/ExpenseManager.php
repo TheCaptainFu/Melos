@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\gg_members;
+namespace Drupal\gg_members_expenses;
 
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;

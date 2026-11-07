@@ -1,9 +1,11 @@
 <?php
 
-namespace Drupal\gg_members;
+namespace Drupal\gg_members_stats;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
+use Drupal\gg_members\MemberManager;
+use Drupal\gg_members_expenses\ExpenseManager;
 
 /**
  * Numbers behind the statistics page.

@@ -1,0 +1,7 @@
+chart:
+  version: 1.0.0
+  js:
+    js/stats-chart.js: {}
+  dependencies:
+    - core/drupal
+    - core/once

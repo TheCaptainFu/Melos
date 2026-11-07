@@ -1,0 +1,7 @@
+gg_members.expenses:
+  path: '/admin/members/expenses'
+  defaults:
+    _form: '\Drupal\gg_members_expenses\Form\ExpenseForm'
+    _title: 'Έξοδα'
+  requirements:
+    _permission: 'administer gg_members'

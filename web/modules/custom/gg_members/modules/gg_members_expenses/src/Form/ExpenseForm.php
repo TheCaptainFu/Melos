@@ -1,14 +1,14 @@
 <?php
 
-namespace Drupal\gg_members\Form;
+namespace Drupal\gg_members_expenses\Form;
 
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Render\Markup;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
-use Drupal\gg_members\ExpenseManager;
 use Drupal\gg_members\MemberManager;
+use Drupal\gg_members_expenses\ExpenseManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**

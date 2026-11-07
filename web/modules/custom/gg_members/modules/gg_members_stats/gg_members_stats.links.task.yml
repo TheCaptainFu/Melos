@@ -1,0 +1,26 @@
+# "Στατιστικά" among the members tabs.
+gg_members.tab.stats:
+  route_name: gg_members.stats
+  base_route: gg_members.dashboard
+  title: 'Στατιστικά'
+  weight: 10
+
+# Under "Στατιστικά": income; expenses and the two together appear only
+# with the Expenses module (their routes need it).
+gg_members.tab.stats.income:
+  route_name: gg_members.stats
+  parent_id: gg_members.tab.stats
+  title: 'Έσοδα'
+  weight: 0
+
+gg_members.tab.stats.expenses:
+  route_name: gg_members.stats_expenses
+  parent_id: gg_members.tab.stats
+  title: 'Ανάλυση εξόδων'
+  weight: 10
+
+gg_members.tab.stats.profit:
+  route_name: gg_members.stats_profit
+  parent_id: gg_members.tab.stats
+  title: 'Κέρδος'
+  weight: 20

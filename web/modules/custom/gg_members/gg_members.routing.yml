@@ -14,38 +14,6 @@ gg_members.member_add:
   requirements:
     _permission: 'administer gg_members'
 
-gg_members.stats:
-  path: '/admin/members/stats'
-  defaults:
-    _controller: '\Drupal\gg_members\Controller\MemberStatsController::page'
-    _title: 'Στατιστικά'
-  requirements:
-    _permission: 'administer gg_members'
-
-gg_members.expenses:
-  path: '/admin/members/expenses'
-  defaults:
-    _form: '\Drupal\gg_members\Form\ExpenseForm'
-    _title: 'Έξοδα'
-  requirements:
-    _permission: 'administer gg_members'
-
-gg_members.stats_expenses:
-  path: '/admin/members/stats/expenses'
-  defaults:
-    _controller: '\Drupal\gg_members\Controller\MemberStatsController::expenses'
-    _title: 'Στατιστικά'
-  requirements:
-    _permission: 'administer gg_members'
-
-gg_members.stats_profit:
-  path: '/admin/members/stats/profit'
-  defaults:
-    _controller: '\Drupal\gg_members\Controller\MemberStatsController::profit'
-    _title: 'Στατιστικά'
-  requirements:
-    _permission: 'administer gg_members'
-
 gg_members.settings:
   path: '/admin/members/settings'
   defaults:

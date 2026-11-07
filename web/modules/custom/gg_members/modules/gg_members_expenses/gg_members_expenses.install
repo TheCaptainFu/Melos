@@ -1,0 +1,171 @@
+<?php
+
+/**
+ * @file
+ * Install and uninstall functions for GG Members Expenses.
+ */
+
+/**
+ * Implements hook_install().
+ *
+ * The tables are made here rather than in hook_schema(): sites that had
+ * expenses before this was a module of its own already have them, with
+ * their data, and keep them as they are.
+ */
+function gg_members_expenses_install() {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->tableExists('gg_members_expense')) {
+    $schema->createTable('gg_members_expense', gg_members_expenses_expense_table());
+  }
+  if (!$schema->tableExists('gg_members_expense_recurring')) {
+    $schema->createTable('gg_members_expense_recurring', gg_members_expenses_recurring_table());
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ *
+ * Uninstalling deletes every expense and fixed expense.
+ */
+function gg_members_expenses_uninstall() {
+  $schema = \Drupal::database()->schema();
+  foreach (['gg_members_expense', 'gg_members_expense_recurring'] as $table) {
+    if ($schema->tableExists($table)) {
+      $schema->dropTable($table);
+    }
+  }
+}
+
+/**
+ * Schema of the gg_members_expense table.
+ */
+function gg_members_expenses_expense_table(): array {
+  return [
+    'description' => "The academy's expenses (rent, coaches, bills…), one row per expense.",
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'expense_date' => [
+        'type' => 'varchar',
+        'length' => 10,
+        'not null' => TRUE,
+        'description' => 'ISO date YYYY-MM-DD.',
+      ],
+      'category' => [
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'description' => 'A key of ExpenseManager::CATEGORIES.',
+      ],
+      'amount' => [
+        'type' => 'numeric',
+        'precision' => 10,
+        'scale' => 2,
+        'not null' => TRUE,
+      ],
+      'description' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ],
+      'recurring_id' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'description' => 'The recurring expense that entered it automatically, if any.',
+      ],
+      'uid' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Who entered it (0: entered automatically).',
+      ],
+      'created' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'expense_date' => ['expense_date'],
+    ],
+  ];
+}
+
+/**
+ * Schema of the gg_members_expense_recurring table.
+ */
+function gg_members_expenses_recurring_table(): array {
+  return [
+    'description' => 'Fixed monthly expenses (rent, coaches…), entered automatically every month on their day.',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'category' => [
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      ],
+      'amount' => [
+        'type' => 'numeric',
+        'precision' => 10,
+        'scale' => 2,
+        'not null' => TRUE,
+      ],
+      'day' => [
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 1,
+        'description' => 'Day of the month it is entered on, 1-28.',
+      ],
+      'description' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'only_open' => [
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => '1: skipped in the months the academy is closed.',
+      ],
+      'active' => [
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 1,
+      ],
+      'start_month' => [
+        'type' => 'varchar',
+        'length' => 7,
+        'not null' => TRUE,
+        'description' => 'YYYY-MM; the first month it is entered for.',
+      ],
+      'last_month' => [
+        'type' => 'varchar',
+        'length' => 7,
+        'not null' => FALSE,
+        'description' => 'YYYY-MM; the last month already handled, so none is entered twice.',
+      ],
+      'created' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['id'],
+  ];
+}

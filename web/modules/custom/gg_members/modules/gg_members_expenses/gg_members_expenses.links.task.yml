@@ -1,0 +1,6 @@
+# "Έξοδα" among the members tabs.
+gg_members.tab.expenses:
+  route_name: gg_members.expenses
+  base_route: gg_members.dashboard
+  title: 'Έξοδα'
+  weight: 20
