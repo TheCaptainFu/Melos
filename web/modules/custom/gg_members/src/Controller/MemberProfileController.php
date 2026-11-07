@@ -59,7 +59,7 @@ class MemberProfileController extends ControllerBase {
     $openMonths = MemberManager::openMonths($this->memberManager->getLedger($member));
     $stats = $this->memberManager->getMemberStats($member);
 
-    return [
+    $build = [
       '#theme' => 'gg_members_profile',
       '#member' => [
         'name' => $record->name,
@@ -93,9 +93,13 @@ class MemberProfileController extends ControllerBase {
         'delete' => MemberManager::withBack(Url::fromRoute('gg_members.member_delete', ['member' => $member]), $back),
         'back' => MemberManager::listUrl($back),
       ],
+      '#extra' => [],
       '#attached' => ['library' => ['gg_members/admin']],
       '#cache' => ['max-age' => 0],
     ];
+    // Other modules' sections (e.g. the attendance card) go in #extra.
+    $this->moduleHandler()->alter('gg_members_profile', $build, $record);
+    return $build;
   }
 
   protected function className(int $tid): ?string {

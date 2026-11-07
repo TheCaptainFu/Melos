@@ -1,0 +1,43 @@
+{#
+/**
+ * @file
+ * The page a card's link opens. On the door device: the door's answer
+ * (the attendance is already recorded). Anywhere else: only that this is
+ * the club's card — nothing about the member.
+ *
+ * Available variables:
+ * - club.
+ * - result: see Attendance::scan(), or NULL on someone else's phone.
+ * - scanner_url: back to the scanner (door device only).
+ */
+#}
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>{{ 'Κάρτα παρουσίας'|t }} — {{ club }}</title>
+  {% include '@gg_members_attendance/gg-members-attendance-door.css.twig' %}
+  <style>
+    .plain { min-height: 100%; display: grid; place-items: center; padding: 24px; background: #f3f4f6; color: #111827; text-align: center; }
+    .plain__card { max-width: 360px; padding: 28px 24px; border: 1px solid #d1d5db; border-radius: 20px; background: #fff; }
+    .plain__club { margin: 0 0 10px; font-size: .85rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #374151; }
+    .plain__text { margin: 0; color: #4b5563; line-height: 1.5; }
+    .again { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); padding: 14px 26px; border-radius: 12px; background: rgba(0,0,0,.35); color: #fff; font-size: 1.1rem; font-weight: 700; text-decoration: none; }
+  </style>
+</head>
+<body>
+  {% if result %}
+    {% include '@gg_members_attendance/gg-members-attendance-result.html.twig' with {result: result} only %}
+    <a class="again" href="{{ scanner_url }}">{{ 'Σκανάρισμα επόμενου'|t }}</a>
+  {% else %}
+    <main class="plain">
+      <div class="plain__card">
+        <p class="plain__club">{{ club }}</p>
+        <p class="plain__text">{{ 'Αυτή είναι κάρτα παρουσίας του συλλόγου. Σκανάρεται στην είσοδο, πριν την προπόνηση.'|t }}</p>
+      </div>
+    </main>
+  {% endif %}
+</body>
+</html>

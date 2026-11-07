@@ -1,0 +1,44 @@
+{#
+/**
+ * @file
+ * The member's QR card on their profile: the QR, whether it's been emailed,
+ * and the button for when the member has lost it.
+ *
+ * Available variables:
+ * - qr_url: the QR image.
+ * - card_url: the card's own page (what the email links to).
+ * - email: the member's email, if valid.
+ * - sent: date, to — when and where the card was last emailed, if ever.
+ * - send_url, renew_url: the actions.
+ * - attendance: count (this month), month (accusative), last (dd/mm/YYYY
+ *   or NULL), month_url.
+ */
+#}
+<div class="gg-members-card gg-members-profile__section gg-attendance-card">
+  <h3>{{ 'Κάρτα παρουσίας'|t }}</h3>
+  {% if attendance %}
+    <p class="gg-attendance-card__summary">
+      <a href="{{ attendance.month_url }}">{{ attendance.count == 1 ? 'Ήρθε 1 φορά τον @month'|t({'@month': attendance.month}) : 'Ήρθε @count φορές τον @month'|t({'@count': attendance.count, '@month': attendance.month}) }}</a>
+      {% if attendance.last %}<span>{{ 'τελευταία @date'|t({'@date': attendance.last}) }}</span>{% endif %}
+    </p>
+  {% endif %}
+  <img class="gg-attendance-card__qr" src="{{ qr_url }}" alt="{{ 'Κωδικός QR'|t }}" width="160" height="160">
+
+  {% if sent %}
+    <p class="gg-attendance-card__status is-sent">{{ 'Στάλθηκε @date στο @to'|t({'@date': sent.date, '@to': sent.to}) }}</p>
+  {% elseif email %}
+    <p class="gg-attendance-card__status">{{ 'Δεν έχει σταλεί ακόμα με email.'|t }}</p>
+  {% else %}
+    <p class="gg-attendance-card__status">{{ 'Το μέλος δεν έχει email — τυπώστε την κάρτα.'|t }}</p>
+  {% endif %}
+
+  <div class="gg-attendance-card__actions">
+    <a href="{{ card_url }}" class="button button--small" target="_blank">{{ 'Άνοιγμα / εκτύπωση'|t }}</a>
+    <a href="{{ renew_url }}" class="button button--small gg-attendance-card__renew" title="{{ 'Αν η κάρτα χάθηκε και δεν θέλετε να ισχύει πια'|t }}" onclick="return confirm('{{ 'Νέο QR; Η τωρινή κάρτα θα σταματήσει να ισχύει.'|t|e('js') }}');">{{ 'Νέο QR'|t }}</a>
+  </div>
+
+  {% if email %}
+    {# The member lost the QR: the same card again, to their email. #}
+    <a href="{{ send_url }}" class="button button--primary gg-attendance-card__send">{{ sent ? 'Στείλε ξανά το QR με email'|t : 'Στείλε το QR με email'|t }}</a>
+  {% endif %}
+</div>

@@ -1,0 +1,93 @@
+{#
+/**
+ * @file
+ * The "Μήνας" tab: members down the side, the month's days across, a tick
+ * where they came, totals per member and per day.
+ *
+ * Available variables:
+ * - grid: see Attendance::month() — days, members.
+ * - label: "Νοέμβριος 2026"; previous_url, next_url (NULL at this month),
+ *   current_url (back to this month, NULL when on it).
+ * - classes: tid => name; class_tid; month ('YYYY-MM').
+ * - export_url: the same month as a CSV for Excel.
+ */
+#}
+{% set weekdays = ['Κ', 'Δ', 'Τ', 'Τ', 'Π', 'Π', 'Σ'] %}
+<div class="gg-members-admin gg-attendance-month" lang="el">
+  <div class="gg-attendance-day__head">
+    <div class="gg-members-month-nav">
+      <a class="gg-members-month-nav__arrow" href="{{ previous_url }}" aria-label="{{ 'Προηγούμενος μήνας'|t }}">‹</a>
+      <h2 class="gg-members-month-nav__label">{{ label }}</h2>
+      {% if next_url %}
+        <a class="gg-members-month-nav__arrow" href="{{ next_url }}" aria-label="{{ 'Επόμενος μήνας'|t }}">›</a>
+      {% else %}
+        <span class="gg-members-month-nav__arrow is-disabled" aria-hidden="true">›</span>
+      {% endif %}
+      {% if current_url %}<a class="gg-members-month-nav__today" href="{{ current_url }}">{{ 'Τρέχων μήνας'|t }}</a>{% endif %}
+    </div>
+    <a class="button" href="{{ export_url }}">{{ 'Εξαγωγή σε Excel'|t }}</a>
+  </div>
+
+  <div class="gg-members-card gg-members-card--filters">
+    <form method="get" class="gg-members-filters">
+      <input type="hidden" name="month" value="{{ month }}">
+      <div class="gg-members-filters__field">
+        <label for="gg-attendance-month-class">{{ 'Τάξη'|t }}</label>
+        <select id="gg-attendance-month-class" name="class">
+          <option value="">{{ '- Όλες -'|t }}</option>
+          {% for tid, name in classes %}
+            <option value="{{ tid }}"{{ tid == class_tid ? ' selected' }}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="visually-hidden">{{ 'Εφαρμογή'|t }}</button>
+    </form>
+  </div>
+
+  <div class="gg-members-card gg-attendance-month__card">
+    {% if grid.members %}
+      <div class="gg-attendance-month__scroll">
+        <table class="gg-attendance-month__grid">
+          <thead>
+            <tr>
+              <th class="gg-attendance-month__name">{{ 'Μέλος'|t }}</th>
+              {% for day, info in grid.days %}
+                <th class="{{ info.weekday in [0, 6] ? 'is-weekend' }}{{ info.future ? ' is-future' }}">
+                  <span>{{ weekdays[info.weekday] }}</span>{{ day }}
+                </th>
+              {% endfor %}
+              <th class="gg-attendance-month__total">{{ 'Σύν.'|t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for member in grid.members %}
+              <tr>
+                <th class="gg-attendance-month__name" scope="row">
+                  <a href="{{ path('gg_members.member_view', {'member': member.member_id}) }}">{{ member.name }}</a>
+                  {% if member.class_name %}<small>{{ member.class_name }}</small>{% endif %}
+                </th>
+                {% for day, info in grid.days %}
+                  <td class="{{ info.weekday in [0, 6] ? 'is-weekend' }}{{ info.future ? ' is-future' }}">
+                    {% if member.days[day] is defined %}<span class="gg-attendance-month__tick" title="{{ day }}">✓</span>{% endif %}
+                  </td>
+                {% endfor %}
+                <td class="gg-attendance-month__total">{{ member.total }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr>
+              <th class="gg-attendance-month__name" scope="row">{{ 'Ήρθαν'|t }}</th>
+              {% for day, info in grid.days %}
+                <td class="{{ info.weekday in [0, 6] ? 'is-weekend' }}{{ info.future ? ' is-future' }}">{{ info.total ?: '' }}</td>
+              {% endfor %}
+              <td class="gg-attendance-month__total">{{ grid.days|column('total')|reduce((sum, n) => sum + n, 0) }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    {% else %}
+      <p class="gg-members-legend">{{ 'Δεν υπάρχουν μέλη σε αυτή την τάξη.'|t }}</p>
+    {% endif %}
+  </div>
+</div>

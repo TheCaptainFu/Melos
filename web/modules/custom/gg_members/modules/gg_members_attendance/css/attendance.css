@@ -1,0 +1,226 @@
+/* GG Members Attendance — the QR card on the profile, the cards list. */
+
+.gg-attendance-card {
+  text-align: center;
+}
+
+.gg-attendance-card h3 {
+  text-align: left;
+}
+
+.gg-attendance-card__qr {
+  display: block;
+  width: 160px;
+  height: 160px;
+  margin: 4px auto 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  image-rendering: pixelated;
+}
+
+.gg-attendance-card__status {
+  margin: 0 0 12px;
+  color: #6b7280;
+}
+
+.gg-attendance-card__status.is-sent {
+  color: #15803d;
+  font-weight: 600;
+}
+
+/* "Στείλε ξανά το QR με email": the main thing to do here, full width at
+   the bottom of the card. */
+.button.gg-attendance-card__send {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 12px 0 0;
+  text-align: center;
+}
+
+.gg-attendance-card__actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gg-attendance-card__actions .button {
+  margin: 0;
+}
+
+.gg-attendance__actions {
+  margin: 0 0 16px;
+}
+
+.gg-attendance__badge--pending {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.gg-attendance__badge--none {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+/* "Παρουσίες": ‹ day ›, the scanner button, the count, add by hand, the list. */
+.gg-attendance-day__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-bottom: 16px;
+}
+
+.gg-attendance-day__head .gg-members-month-nav {
+  margin: 0;
+}
+
+.button.gg-attendance-day__scan {
+  margin: 0;
+}
+
+.gg-attendance-day__add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 18px 20px;
+}
+
+.gg-attendance-day__add .form-item {
+  flex: 1;
+  min-width: 240px;
+  max-width: 480px;
+  margin: 0;
+}
+
+.gg-attendance-day__add .form-item select {
+  width: 100%;
+}
+
+.gg-attendance-day__add .button {
+  margin: 0;
+}
+
+.gg-attendance-day__list {
+  padding: 18px 20px;
+}
+
+/* The member's attendance this month, at the top of the card section. */
+.gg-attendance-card__summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 10px;
+  margin: 0 0 12px;
+  font-weight: 600;
+}
+
+.gg-attendance-card__summary span {
+  font-weight: 400;
+  color: #6b7280;
+}
+
+/* "Μήνας": members × days. The grid scrolls sideways inside its card, the
+   names staying put. */
+.gg-attendance-month__card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.gg-attendance-month__scroll {
+  overflow-x: auto;
+}
+
+.gg-attendance-month__grid {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  font-size: 0.9rem;
+}
+
+.gg-attendance-month__grid th,
+.gg-attendance-month__grid td {
+  min-width: 30px;
+  height: auto;
+  padding: 7px 4px;
+  border-bottom: 1px solid #f0f1f3;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.gg-attendance-month__grid thead th {
+  background: #f9fafb;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+.gg-attendance-month__grid thead th span {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #9ca3af;
+}
+
+.gg-attendance-month__grid .is-weekend {
+  background: #f9fafb;
+}
+
+.gg-attendance-month__grid .is-future {
+  color: #d1d5db;
+}
+
+.gg-attendance-month__grid .gg-attendance-month__name {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 190px;
+  padding-left: 16px;
+  background: #fff;
+  box-shadow: 1px 0 0 #e5e7eb;
+  text-align: left;
+}
+
+.gg-attendance-month__grid thead .gg-attendance-month__name {
+  background: #f9fafb;
+}
+
+.gg-attendance-month__name a {
+  color: #111827;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.gg-attendance-month__name small {
+  display: block;
+  font-weight: 400;
+  color: #6b7280;
+}
+
+.gg-attendance-month__tick {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.gg-attendance-month__total {
+  padding-right: 16px !important;
+  font-weight: 800;
+}
+
+.gg-attendance-month__grid tfoot td,
+.gg-attendance-month__grid tfoot th {
+  border-bottom: 0;
+  background: #f9fafb;
+  font-weight: 700;
+}

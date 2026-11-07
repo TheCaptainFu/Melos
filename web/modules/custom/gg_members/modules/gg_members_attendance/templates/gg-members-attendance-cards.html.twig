@@ -1,0 +1,78 @@
+{#
+/**
+ * @file
+ * The "Παρουσιολόγιο" tab: every active member's QR card.
+ *
+ * Available variables:
+ * - rows: name, class_name, email, has_email, sent (date or NULL),
+ *   profile_url, card_url, send_url.
+ * - classes: tid => name; class_tid: the class shown (0 = all).
+ * - unsent: members with an email whose card hasn't been sent.
+ * - print_url, send_all_url.
+ */
+#}
+<div class="gg-members-admin gg-attendance" lang="el">
+  <div class="gg-members-card gg-members-card--filters">
+    <form method="get" class="gg-members-filters">
+      <div class="gg-members-filters__field">
+        <label for="gg-attendance-class">{{ 'Τάξη'|t }}</label>
+        <select id="gg-attendance-class" name="class">
+          <option value="">{{ '- Όλες -'|t }}</option>
+          {% for tid, name in classes %}
+            <option value="{{ tid }}"{{ tid == class_tid ? ' selected' }}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="visually-hidden">{{ 'Εφαρμογή'|t }}</button>
+    </form>
+  </div>
+
+  <div class="gg-members-actions gg-attendance__actions">
+    <a href="{{ print_url }}" class="button button--primary" target="_blank">{{ 'Εκτύπωση καρτών'|t }}</a>
+    {% if unsent %}
+      <a href="{{ send_all_url }}" class="button" onclick="return confirm('{{ 'Να σταλούν @count κάρτες με email;'|t({'@count': unsent})|e('js') }}');">{{ 'Αποστολή σε όσους δεν έχουν λάβει (@count)'|t({'@count': unsent}) }}</a>
+    {% endif %}
+  </div>
+
+  <div class="gg-members-card">
+    <table class="gg-members-table gg-attendance__table">
+      <thead>
+        <tr>
+          <th>{{ 'Μέλος'|t }}</th>
+          <th>{{ 'Τάξη'|t }}</th>
+          <th>{{ 'Email'|t }}</th>
+          <th>{{ 'Κάρτα'|t }}</th>
+          <th><span class="visually-hidden">{{ 'Ενέργειες'|t }}</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <td><a href="{{ row.profile_url }}" class="gg-members-name-link">{{ row.name }}</a></td>
+            <td>{{ row.class_name ?: '—' }}</td>
+            <td>{{ row.email ?: '—' }}</td>
+            <td>
+              {% if row.sent %}
+                <span class="gg-members-badge gg-members-badge--paid">{{ 'Στάλθηκε @date'|t({'@date': row.sent}) }}</span>
+              {% elseif row.has_email %}
+                <span class="gg-members-badge gg-attendance__badge--pending">{{ 'Δεν στάλθηκε'|t }}</span>
+              {% else %}
+                <span class="gg-members-badge gg-attendance__badge--none">{{ 'Χωρίς email'|t }}</span>
+              {% endif %}
+            </td>
+            <td class="gg-members-cell--actions">
+              <div class="gg-members-row-actions">
+                {% if row.has_email %}
+                  <a href="{{ row.send_url }}" class="gg-members-action--payments">{{ row.sent ? 'Ξανά'|t : 'Αποστολή'|t }}</a>
+                {% endif %}
+                <a href="{{ row.card_url }}" target="_blank">{{ 'Κάρτα'|t }}</a>
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="5">{{ 'Δεν υπάρχουν ενεργά μέλη.'|t }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

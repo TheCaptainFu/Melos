@@ -1,0 +1,35 @@
+{#
+/**
+ * @file
+ * The door's answer to one scanned card — shared by the card's link page
+ * (server-side) and, as a template for its markup, the scanner's script.
+ *
+ * Available variables:
+ * - result: state ('ok', 'again', 'inactive', 'unknown'), name,
+ *   class_name, photo (data: URI), time.
+ */
+#}
+<div class="result result--{{ result.state }}">
+  {% if result.photo %}
+    <img class="result__photo" src="{{ result.photo }}" alt="">
+  {% elseif result.name %}
+    <span class="result__photo result__photo--initial" aria-hidden="true">{{ result.name|first|upper }}</span>
+  {% endif %}
+  {% if result.state == 'unknown' %}
+    <p class="result__title">{{ 'Άγνωστη ή παλιά κάρτα'|t }}</p>
+    <p class="result__note">{{ 'Πέρασε από τον προπονητή.'|t }}</p>
+  {% else %}
+    <p class="result__name">{{ result.name }}</p>
+    {% if result.class_name %}<p class="result__class">{{ result.class_name }}</p>{% endif %}
+    {% if result.state == 'ok' %}
+      <p class="result__title">{{ 'Καλώς ήρθες!'|t }}</p>
+      <p class="result__note">{{ result.time }}</p>
+    {% elseif result.state == 'again' %}
+      <p class="result__title">{{ 'Έχεις ήδη περαστεί σήμερα'|t }}</p>
+      <p class="result__note">{{ '@time'|t({'@time': result.time}) }}</p>
+    {% elseif result.state == 'inactive' %}
+      <p class="result__title">{{ 'Ανενεργό μέλος'|t }}</p>
+      <p class="result__note">{{ 'Πέρασε από τον προπονητή.'|t }}</p>
+    {% endif %}
+  {% endif %}
+</div>

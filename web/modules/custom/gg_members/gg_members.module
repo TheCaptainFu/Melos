@@ -89,6 +89,7 @@ function gg_members_theme() {
         'finance' => [],
         'documents' => [],
         'urls' => [],
+        'extra' => [],
       ],
     ],
   ];

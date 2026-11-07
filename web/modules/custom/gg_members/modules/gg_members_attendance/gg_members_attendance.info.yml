@@ -1,0 +1,7 @@
+name: GG Members Attendance
+type: module
+description: 'Attendance (Παρουσιολόγιο): a unique QR card for every member, sent by email, scanned at the door. A paid extra — enable it only on sites that bought it.'
+core_version_requirement: ^10||^11
+package: Custom
+dependencies:
+  - gg_members:gg_members

@@ -546,6 +546,8 @@ class MemberManager {
       $this->database->delete('gg_members_payment')->condition('member_id', $id)->execute();
       $this->database->delete('gg_members_fee')->condition('member_id', $id)->execute();
       $this->database->delete('gg_members_member')->condition('id', $id)->execute();
+      // Other modules' rows about the member (e.g. attendance).
+      \Drupal::moduleHandler()->invokeAll('gg_members_member_delete', [$id]);
     }
     catch (\Exception $e) {
       $transaction->rollBack();

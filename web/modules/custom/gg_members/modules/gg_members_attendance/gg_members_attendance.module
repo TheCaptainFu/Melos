@@ -1,0 +1,226 @@
+<?php
+
+/**
+ * @file
+ * Hooks for GG Members Attendance.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Url;
+use Drupal\gg_members\MemberManager;
+
+/**
+ * Implements hook_theme().
+ */
+function gg_members_attendance_theme() {
+  return [
+    'gg_members_attendance_cards' => [
+      'template' => 'gg-members-attendance-cards',
+      'variables' => [
+        'rows' => [],
+        'classes' => [],
+        'class_tid' => 0,
+        'unsent' => 0,
+        'print_url' => NULL,
+        'send_all_url' => NULL,
+      ],
+    ],
+    'gg_members_attendance_profile' => [
+      'template' => 'gg-members-attendance-profile',
+      'variables' => [
+        'qr_url' => NULL,
+        'card_url' => NULL,
+        'email' => NULL,
+        'sent' => NULL,
+        'send_url' => NULL,
+        'renew_url' => NULL,
+        'attendance' => NULL,
+      ],
+    ],
+    'gg_members_attendance_card_page' => [
+      'template' => 'gg-members-attendance-card-page',
+      'variables' => [
+        'name' => NULL,
+        'class_name' => NULL,
+        'club' => NULL,
+        'qr_url' => NULL,
+      ],
+    ],
+    'gg_members_attendance_print' => [
+      'template' => 'gg-members-attendance-print',
+      'variables' => [
+        'cards' => [],
+        'club' => NULL,
+      ],
+    ],
+    'gg_members_attendance_checkin' => [
+      'template' => 'gg-members-attendance-checkin',
+      'variables' => [
+        'club' => NULL,
+        'result' => NULL,
+        'scanner_url' => NULL,
+      ],
+    ],
+    'gg_members_attendance_scanner' => [
+      'template' => 'gg-members-attendance-scanner',
+      'variables' => [
+        'club' => NULL,
+        'today' => 0,
+        'record_url' => NULL,
+        'token_url' => NULL,
+        'jsqr_url' => NULL,
+        'scanner_js_url' => NULL,
+        'back_url' => NULL,
+      ],
+    ],
+    'gg_members_attendance_month' => [
+      'template' => 'gg-members-attendance-month',
+      'variables' => [
+        'grid' => [],
+        'label' => NULL,
+        'previous_url' => NULL,
+        'next_url' => NULL,
+        'current_url' => NULL,
+        'classes' => [],
+        'class_tid' => 0,
+        'month' => NULL,
+        'export_url' => NULL,
+      ],
+    ],
+    'gg_members_attendance_email' => [
+      'template' => 'gg-members-attendance-email',
+      'variables' => [
+        'name' => NULL,
+        'first_name' => NULL,
+        'club' => NULL,
+        'card_url' => NULL,
+        'for_guardian' => FALSE,
+      ],
+    ],
+  ];
+}
+
+/**
+ * Implements hook_gg_members_profile_alter().
+ *
+ * The member's QR card on their profile: the code, whether it's been
+ * emailed, and buttons to email it, open it, or make a new one.
+ */
+function gg_members_attendance_gg_members_profile_alter(array &$build, \stdClass $member) {
+  if (!\Drupal::currentUser()->hasPermission('manage gg_members attendance')) {
+    return;
+  }
+  $cards = \Drupal::service('gg_members_attendance.cards');
+  $id = (int) $member->id;
+  $token = $cards->token($id);
+  $sent = $cards->sentInfo($id);
+  $back = Url::fromRoute('<current>')->toString();
+  $action = function (string $route) use ($id, $back) {
+    $url = Url::fromRoute($route, ['member' => $id]);
+    $url->setOption('query', ['destination' => $back, 'token' => \Drupal::csrfToken()->get($url->getInternalPath())]);
+    return $url->toString();
+  };
+
+  $build['#extra']['attendance'] = [
+    '#theme' => 'gg_members_attendance_profile',
+    '#qr_url' => Url::fromRoute('gg_members_attendance.card_qr', ['token' => $token])->toString(),
+    '#card_url' => $cards->cardUrl($token),
+    '#email' => filter_var(trim((string) $member->email), FILTER_VALIDATE_EMAIL) ? trim((string) $member->email) : NULL,
+    '#sent' => $sent ? ['date' => date('d/m/Y H:i', $sent['sent']), 'to' => $sent['sent_to']] : NULL,
+    '#send_url' => $action('gg_members_attendance.send'),
+    '#renew_url' => $action('gg_members_attendance.renew'),
+    '#attendance' => gg_members_attendance_profile_summary($id),
+  ];
+  $build['#attached']['library'][] = 'gg_members_attendance/admin';
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for gg_members_member_form.
+ *
+ * The card goes out by email when the member is saved — a new member, or
+ * one whose card was never sent (e.g. their email was just added) — unless
+ * this is unticked.
+ */
+function gg_members_attendance_form_gg_members_member_form_alter(array &$form, FormStateInterface $form_state) {
+  if (!\Drupal::currentUser()->hasPermission('manage gg_members attendance')) {
+    return;
+  }
+  // Editing a member whose card has already gone out: nothing to offer
+  // (the profile has "Στείλε ξανά").
+  $memberId = (int) ($form['id']['#value'] ?? 0);
+  if ($memberId && \Drupal::service('gg_members_attendance.cards')->sentInfo($memberId)) {
+    return;
+  }
+  // At the very bottom, just above the save button. Without an email it
+  // simply sends nothing.
+  $form['gg_members_attendance_send'] = [
+    '#type' => 'checkbox',
+    '#title' => t('Να σταλεί το QR με email'),
+    '#description' => t('Το μέλος (ή ο κηδεμόνας) παίρνει στο email του τον κωδικό QR για την είσοδο στις προπονήσεις. Ξετσεκάρετε αν δεν θέλετε να σταλεί τώρα — μπορείτε να το στείλετε αργότερα από το προφίλ.'),
+    '#default_value' => TRUE,
+    '#weight' => 99,
+  ];
+  $form['actions']['#weight'] = 100;
+
+  // After the form's own submit, which saves the member.
+  $form['#submit'][] = 'gg_members_attendance_member_form_submit';
+}
+
+/**
+ * Submit handler: emails the member's card (a new member's, or one whose
+ * card hasn't gone out yet), if ticked.
+ */
+function gg_members_attendance_member_form_submit(array &$form, FormStateInterface $form_state) {
+  $saved = $form_state->get('gg_members_saved');
+  if (!$saved || !$form_state->getValue('gg_members_attendance_send') || !trim((string) $form_state->getValue('email'))) {
+    return;
+  }
+  $error = \Drupal::service('gg_members_attendance.cards')->send($saved['id']);
+  if ($error) {
+    \Drupal::messenger()->addWarning(t('Η κάρτα QR δεν στάλθηκε: @error Μπορείτε να τη στείλετε από το προφίλ του μέλους.', ['@error' => $error]));
+  }
+  else {
+    \Drupal::messenger()->addStatus(t('Η κάρτα QR στάλθηκε στο @email.', ['@email' => trim((string) $form_state->getValue('email'))]));
+  }
+}
+
+/**
+ * Implements hook_gg_members_member_delete().
+ */
+function gg_members_attendance_gg_members_member_delete(int $id) {
+  \Drupal::database()->delete('gg_members_qr')->condition('member_id', $id)->execute();
+  \Drupal::database()->delete('gg_members_attendance')->condition('member_id', $id)->execute();
+}
+
+/**
+ * Implements hook_user_login().
+ *
+ * The door device's account ("Είσοδος": may scan, nothing else) goes
+ * straight to the scanner after logging in, unless the login link says
+ * where to go.
+ */
+function gg_members_attendance_user_login(AccountInterface $account) {
+  if (!$account->hasPermission('record gg_members attendance') || $account->hasPermission('manage gg_members attendance')) {
+    return;
+  }
+  $request = \Drupal::request();
+  if (!$request->query->has('destination')) {
+    $request->query->set('destination', Url::fromRoute('gg_members_attendance.scan')->toString());
+  }
+}
+
+/**
+ * "Ήρθε 9 φορές τον Νοέμβριο · τελευταία 06/11", for the profile.
+ */
+function gg_members_attendance_profile_summary(int $memberId): array {
+  $summary = \Drupal::service('gg_members_attendance.attendance')->memberSummary($memberId);
+  $last = $summary['last'] ? \DateTimeImmutable::createFromFormat('Y-m-d', $summary['last']) : NULL;
+  return [
+    'count' => $summary['count'],
+    // Accusative: "τον Νοέμβριο".
+    'month' => mb_substr(MemberManager::MONTH_NAMES[(int) date('n')], 0, -1),
+    'last' => $last ? $last->format('d/m/Y') : NULL,
+    'month_url' => Url::fromRoute('gg_members_attendance.month')->toString(),
+  ];
+}

@@ -1,0 +1,7 @@
+manage gg_members attendance:
+  title: 'Manage attendance and QR cards'
+  description: 'See the Παρουσιολόγιο tab, print and email members’ QR cards, make new ones.'
+  restrict access: true
+record gg_members attendance:
+  title: 'Scan cards at the door'
+  description: 'Open the door scanner and record attendance by QR — and nothing else. For the "Είσοδος" account of the device at the entrance.'

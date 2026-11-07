@@ -1,0 +1,118 @@
+# The card's own page and image: public, reached by the code in the QR or
+# the emailed link (the code can't be guessed and shows only a first name,
+# class and the QR).
+gg_members_attendance.card:
+  path: '/card/{token}'
+  defaults:
+    _controller: '\Drupal\gg_members_attendance\Controller\CardController::page'
+  requirements:
+    _access: 'TRUE'
+    token: '[A-Za-z0-9_-]{20,64}'
+  options:
+    no_cache: TRUE
+
+gg_members_attendance.card_qr:
+  path: '/card/{token}/qr.png'
+  defaults:
+    _controller: '\Drupal\gg_members_attendance\Controller\CardController::image'
+  requirements:
+    _access: 'TRUE'
+    token: '[A-Za-z0-9_-]{20,64}'
+  options:
+    no_cache: TRUE
+
+# The link in every card's QR: records attendance on the club's door
+# device, shows only "a club card" anywhere else.
+gg_members_attendance.checkin:
+  path: '/checkin/{token}'
+  defaults:
+    _controller: '\Drupal\gg_members_attendance\Controller\ScanController::checkin'
+  requirements:
+    _access: 'TRUE'
+    token: '[A-Za-z0-9_-]{20,64}'
+  options:
+    no_cache: TRUE
+
+# The scanner on the door device: the camera, full screen.
+gg_members_attendance.scan:
+  path: '/admin/members/attendance/scan'
+  defaults:
+    _controller: '\Drupal\gg_members_attendance\Controller\ScanController::scanner'
+  requirements:
+    _permission: 'record gg_members attendance+manage gg_members attendance'
+
+gg_members_attendance.scan_record:
+  path: '/admin/members/attendance/scan/record'
+  defaults:
+    _controller: '\Drupal\gg_members_attendance\Controller\ScanController::record'
+  methods: [POST]
+  requirements:
+    _permission: 'record gg_members attendance+manage gg_members attendance'
+    _csrf_request_header_token: 'TRUE'
+
+# The "Παρουσιολόγιο" tab: who came today (or another day).
+gg_members_attendance.today:
+  path: '/admin/members/attendance'
+  defaults:
+    _form: '\Drupal\gg_members_attendance\Form\DayForm'
+    _title: 'Παρουσιολόγιο'
+  requirements:
+    _permission: 'manage gg_members attendance'
+
+# Under it, "Κάρτες QR": every member's card.
+gg_members_attendance.cards:
+  path: '/admin/members/attendance/cards'
+  defaults:
+    _controller: '\Drupal\gg_members_attendance\Controller\CardController::list'
+    _title: 'Κάρτες QR'
+  requirements:
+    _permission: 'manage gg_members attendance'
+
+gg_members_attendance.print:
+  path: '/admin/members/attendance/print'
+  defaults:
+    _controller: '\Drupal\gg_members_attendance\Controller\CardController::printCards'
+  requirements:
+    _permission: 'manage gg_members attendance'
+
+gg_members_attendance.send_all:
+  path: '/admin/members/attendance/send-all'
+  defaults:
+    _controller: '\Drupal\gg_members_attendance\Controller\CardController::sendAll'
+  requirements:
+    _permission: 'manage gg_members attendance'
+    _csrf_token: 'TRUE'
+
+gg_members_attendance.send:
+  path: '/admin/members/{member}/card/send'
+  defaults:
+    _controller: '\Drupal\gg_members_attendance\Controller\CardController::send'
+  requirements:
+    _permission: 'manage gg_members attendance'
+    _csrf_token: 'TRUE'
+    member: \d+
+
+gg_members_attendance.renew:
+  path: '/admin/members/{member}/card/renew'
+  defaults:
+    _controller: '\Drupal\gg_members_attendance\Controller\CardController::renew'
+  requirements:
+    _permission: 'manage gg_members attendance'
+    _csrf_token: 'TRUE'
+    member: \d+
+
+# "Μήνας": members × days, and the same as a CSV for Excel.
+gg_members_attendance.month:
+  path: '/admin/members/attendance/month'
+  defaults:
+    _controller: '\Drupal\gg_members_attendance\Controller\MonthController::page'
+    _title: 'Παρουσιολόγιο'
+  requirements:
+    _permission: 'manage gg_members attendance'
+
+gg_members_attendance.month_export:
+  path: '/admin/members/attendance/month/export'
+  defaults:
+    _controller: '\Drupal\gg_members_attendance\Controller\MonthController::export'
+  requirements:
+    _permission: 'manage gg_members attendance'

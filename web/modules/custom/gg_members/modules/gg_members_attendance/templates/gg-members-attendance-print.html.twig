@@ -1,0 +1,51 @@
+{#
+/**
+ * @file
+ * Cards to print and cut out: eight to an A4 page (2 × 4), each with the
+ * club, the QR, the name and class.
+ *
+ * Available variables:
+ * - cards: name, class_name, qr_url.
+ * - club.
+ */
+#}
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex">
+  <title>{{ 'Κάρτες παρουσίας'|t }} — {{ club }}</title>
+  <style>
+    @page { size: A4; margin: 10mm; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #111827; }
+    .bar { display: flex; gap: 12px; align-items: center; padding: 14px 18px; background: #f3f4f6; }
+    .bar button { padding: 8px 16px; border: 0; border-radius: 8px; background: #1d4ed8; color: #fff; font: inherit; cursor: pointer; }
+    .sheet { display: grid; grid-template-columns: repeat(2, 85mm); grid-auto-rows: 64mm; gap: 4mm 6mm; justify-content: center; padding: 6mm 0; }
+    .card { display: grid; grid-template-columns: 40mm 1fr; align-items: center; gap: 4mm; padding: 4mm; border: 1px dashed #9ca3af; border-radius: 3mm; break-inside: avoid; }
+    .card img { width: 40mm; height: 40mm; image-rendering: pixelated; }
+    .club { margin: 0 0 2mm; font-size: 7pt; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #6b7280; }
+    .name { margin: 0; font-size: 12pt; font-weight: 800; line-height: 1.2; }
+    .class { margin: 1mm 0 0; font-size: 9pt; color: #4b5563; }
+    @media print { .bar { display: none; } .sheet { padding: 0; } }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <button type="button" onclick="window.print()">{{ 'Εκτύπωση'|t }}</button>
+    <span>{{ '@count κάρτες · κόψτε στη διακεκομμένη γραμμή'|t({'@count': cards|length}) }}</span>
+  </div>
+  <div class="sheet">
+    {% for card in cards %}
+      <div class="card">
+        <img src="{{ card.qr_url }}" alt="">
+        <div>
+          <p class="club">{{ club }}</p>
+          <p class="name">{{ card.name }}</p>
+          {% if card.class_name %}<p class="class">{{ card.class_name }}</p>{% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</body>
+</html>

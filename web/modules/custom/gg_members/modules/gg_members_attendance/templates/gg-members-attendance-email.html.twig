@@ -1,0 +1,47 @@
+{#
+/**
+ * @file
+ * The email with a member's QR card. Inline styles and tables only, the
+ * way email programs need them; the QR is the embedded image "cid:qr".
+ *
+ * Available variables:
+ * - name (first and last), first_name (for the greeting), club, card_url.
+ * - for_guardian: the member has a guardian (so the parent reads this).
+ */
+#}
+<!DOCTYPE html>
+<html lang="el">
+<body style="margin:0;padding:0;background:#f3f4f6;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:440px;background:#ffffff;border-radius:16px;font-family:Arial,Helvetica,sans-serif;color:#111827;">
+          <tr>
+            <td style="padding:28px 28px 8px;text-align:center;">
+              <p style="margin:0 0 6px;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:#6b7280;">{{ club }}</p>
+              <h1 style="margin:0;font-size:22px;">{{ 'Κάρτα παρουσίας'|t }}</h1>
+              <p style="margin:6px 0 0;font-size:16px;font-weight:bold;">{{ name }}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 28px;text-align:center;">
+              <img src="cid:qr" width="220" height="220" alt="{{ 'Κωδικός QR'|t }}" style="display:block;margin:0 auto;width:220px;height:220px;">
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 28px 8px;font-size:15px;line-height:1.5;">
+              <p style="margin:0 0 12px;">{{ for_guardian ? 'Γεια σας! Αυτή είναι η κάρτα παρουσίας του/της @name στο @club.'|t({'@name': first_name, '@club': club}) : 'Γεια σου @name! Αυτή είναι η κάρτα παρουσίας σου στο @club.'|t({'@name': first_name, '@club': club}) }}</p>
+              <p style="margin:0 0 12px;">{{ 'Δείξτε τον κωδικό QR στην είσοδο σε κάθε προπόνηση — από το κινητό (κρατήστε ένα screenshot) ή τυπωμένο. Τον βρίσκετε και συνημμένο σε αυτό το email.'|t }}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:8px 28px 28px;text-align:center;">
+              <a href="{{ card_url }}" style="display:inline-block;padding:12px 22px;border-radius:10px;background:#1d4ed8;color:#ffffff;font-weight:bold;text-decoration:none;">{{ 'Άνοιγμα κάρτας'|t }}</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<?php
+
+namespace Drupal\gg_members_attendance;
+
+use Drupal\Component\Datetime\TimeInterface;
+use Drupal\Core\Database\Connection;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\Image\ImageFactory;
+use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\gg_members\MemberManager;
+
+/**
+ * Who came to training: one row per member per day, by QR at the door or
+ * ticked by hand.
+ */
+class Attendance {
+
+  public function __construct(
+    protected Connection $database,
+    protected MemberManager $memberManager,
+    protected QrCards $cards,
+    protected TimeInterface $time,
+    protected AccountProxyInterface $currentUser,
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected FileSystemInterface $fileSystem,
+    protected ImageFactory $imageFactory,
+  ) {}
+
+  /**
+   * What the door shows for a scanned card — and the attendance it records.
+   *
+   * @param string $scanned
+   *   What the QR held: the card's link, or the bare code.
+   *
+   * @return array
+   *   state: 'ok' (in), 'again' (already in today), 'inactive', 'unknown';
+   *   and for a known member: name, class_name, photo (a small data: URI,
+   *   or NULL), time ('H:i').
+   */
+  public function scan(string $scanned): array {
+    $token = QrCards::tokenFromScan($scanned);
+    $memberId = $token ? $this->cards->memberIdByToken($token) : NULL;
+    $member = $memberId ? $this->memberManager->getMember($memberId) : NULL;
+    if (!$member) {
+      return ['state' => 'unknown'];
+    }
+
+    $result = [
+      'name' => $member->name,
+      'class_name' => $this->className((int) $member->class_tid),
+      'photo' => $this->photo($memberId),
+    ];
+    if (!$member->status) {
+      return ['state' => 'inactive'] + $result;
+    }
+
+    $recorded = $this->record($memberId, 'qr');
+    $result['time'] = date('H:i', $recorded['time']);
+    if (!$recorded['new']) {
+      return ['state' => 'again'] + $result;
+    }
+    return ['state' => 'ok'] + $result;
+  }
+
+  /**
+   * Records that a member came on a day (today by default); a second time
+   * the same day changes nothing.
+   *
+   * @return array
+   *   new (whether this added the row), time (when they were first marked
+   *   that day), id.
+   */
+  public function record(int $memberId, string $method, ?string $date = NULL): array {
+    $date = $date ?: date('Y-m-d', $this->time->getRequestTime());
+    $existing = $this->database->query('SELECT id, created FROM {gg_members_attendance} WHERE member_id = :id AND attended = :date', [':id' => $memberId, ':date' => $date])->fetchAssoc();
+    if ($existing) {
+      return ['new' => FALSE, 'time' => (int) $existing['created'], 'id' => (int) $existing['id']];
+    }
+
+    $member = $this->memberManager->getMember($memberId);
+    $now = $this->time->getRequestTime();
+    $id = (int) $this->database->insert('gg_members_attendance')
+      ->fields([
+        'member_id' => $memberId,
+        'attended' => $date,
+        'created' => $now,
+        'class_tid' => $member ? (int) $member->class_tid : 0,
+        'method' => $method,
+        'uid' => (int) $this->currentUser->id(),
+      ])
+      ->execute();
+    return ['new' => TRUE, 'time' => $now, 'id' => $id];
+  }
+
+  /**
+   * How many came on a day (today by default).
+   */
+  public function count(?string $date = NULL): int {
+    $date = $date ?: date('Y-m-d', $this->time->getRequestTime());
+    return (int) $this->database->query('SELECT COUNT(*) FROM {gg_members_attendance} WHERE attended = :date', [':date' => $date])->fetchField();
+  }
+
+  /**
+   * A month as a grid: who came on which day.
+   *
+   * @param string $month
+   *   'YYYY-MM'.
+   * @param int $classTid
+   *   Only this class (0 = all).
+   *
+   * @return array
+   *   days: day number => ['weekday' => 0 (Sunday)–6, 'future' => bool,
+   *   'total' => how many came]; members: name, class_name, member_id,
+   *   days (day number => TRUE when they came), total. Active members, and
+   *   anyone else who came that month.
+   */
+  public function month(string $month, int $classTid = 0): array {
+    $first = new \DateTimeImmutable($month . '-01');
+    $last = (int) $first->format('t');
+    $today = date('Y-m-d', $this->time->getRequestTime());
+
+    $came = [];
+    $query = $this->database->select('gg_members_attendance', 'a')->fields('a', ['member_id', 'attended']);
+    $query->condition('a.attended', [$first->format('Y-m-01'), $first->format('Y-m-') . $last], 'BETWEEN');
+    if ($classTid) {
+      $query->condition('a.class_tid', $classTid);
+    }
+    foreach ($query->execute() as $row) {
+      $came[(int) $row->member_id][(int) substr($row->attended, 8, 2)] = TRUE;
+    }
+
+    $days = [];
+    for ($day = 1; $day <= $last; $day++) {
+      $date = $first->setDate((int) $first->format('Y'), (int) $first->format('n'), $day);
+      $days[$day] = ['weekday' => (int) $date->format('w'), 'future' => $date->format('Y-m-d') > $today, 'total' => 0];
+    }
+
+    $members = [];
+    foreach ($this->memberManager->membersQuery(array_filter(['class_tid' => $classTid]))->execute() as $member) {
+      $id = (int) $member->id;
+      if (!$member->status && empty($came[$id])) {
+        continue;
+      }
+      $members[] = [
+        'member_id' => $id,
+        'name' => $member->name,
+        'class_name' => $member->class_name,
+        'days' => $came[$id] ?? [],
+        'total' => count($came[$id] ?? []),
+      ];
+      foreach (array_keys($came[$id] ?? []) as $day) {
+        $days[$day]['total']++;
+      }
+    }
+    return ['days' => $days, 'members' => $members];
+  }
+
+  /**
+   * A member's attendance in a month (this month by default): how many
+   * times, and the last day ('YYYY-MM-DD', or NULL) they came at all.
+   */
+  public function memberSummary(int $memberId, ?string $month = NULL): array {
+    $month = $month ?: date('Y-m', $this->time->getRequestTime());
+    return [
+      'count' => (int) $this->database->query('SELECT COUNT(*) FROM {gg_members_attendance} WHERE member_id = :id AND attended LIKE :month', [':id' => $memberId, ':month' => $month . '-%'])->fetchField(),
+      'last' => $this->database->query('SELECT MAX(attended) FROM {gg_members_attendance} WHERE member_id = :id', [':id' => $memberId])->fetchField() ?: NULL,
+    ];
+  }
+
+  public function delete(int $id): void {
+    $this->database->delete('gg_members_attendance')->condition('id', $id)->execute();
+  }
+
+  /**
+   * Everyone who came on a day, latest first.
+   *
+   * @return array
+   *   Rows: id, member_id, name, class_name, time ('H:i'), method.
+   */
+  public function day(string $date): array {
+    $rows = $this->database->query(
+      'SELECT a.id, a.member_id, a.created, a.method, m.name, t.name AS class_name
+       FROM {gg_members_attendance} a
+       INNER JOIN {gg_members_member} m ON m.id = a.member_id
+       LEFT JOIN {taxonomy_term_field_data} t ON t.tid = a.class_tid
+       WHERE a.attended = :date
+       ORDER BY a.created DESC, a.id DESC',
+      [':date' => $date]
+    )->fetchAll();
+
+    return array_map(fn($row) => [
+      'id' => (int) $row->id,
+      'member_id' => (int) $row->member_id,
+      'name' => $row->name,
+      'class_name' => $row->class_name,
+      'time' => date('H:i', (int) $row->created),
+      'method' => $row->method,
+    ], $rows);
+  }
+
+  /**
+   * The member's photo, small, as a data: URI — photos are private files,
+   * which the door's account can't open.
+   */
+  protected function photo(int $memberId): ?string {
+    $rows = $this->memberManager->getMemberFiles($memberId, 'photo');
+    $row = end($rows);
+    $file = $row ? $this->entityTypeManager->getStorage('file')->load((int) $row->fid) : NULL;
+    if (!$file) {
+      return NULL;
+    }
+    $directory = 'temporary://gg_members_attendance';
+    $copy = $directory . '/photo-' . $file->id() . '-' . (int) $file->getChangedTime() . '.jpg';
+    if (!file_exists($copy)) {
+      $image = $this->imageFactory->get($file->getFileUri());
+      if (!$image->isValid()) {
+        return NULL;
+      }
+      $this->fileSystem->prepareDirectory($directory, FileSystemInterface::CREATE_DIRECTORY);
+      $image->scaleAndCrop(240, 240);
+      $image->convert('jpeg');
+      if (!$image->save($copy)) {
+        return NULL;
+      }
+    }
+    return 'data:image/jpeg;base64,' . base64_encode(file_get_contents($copy));
+  }
+
+  protected function className(int $tid): ?string {
+    $term = $tid ? $this->entityTypeManager->getStorage('taxonomy_term')->load($tid) : NULL;
+    return $term ? $term->label() : NULL;
+  }
+
+}
