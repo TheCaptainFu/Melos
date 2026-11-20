@@ -42,6 +42,11 @@ function gg_members_app_install($is_syncing) {
  * account keeps working on the members.
  */
 function gg_members_app_uninstall($is_syncing) {
+  // The logo goes with the module's settings: let Drupal clean up the file.
+  $fid = (int) \Drupal::config('gg_members_app.settings')->get('logo');
+  if ($fid && ($file = \Drupal\file\Entity\File::load($fid))) {
+    \Drupal::service('file.usage')->delete($file, 'gg_members_app', 'config', 1, 0);
+  }
   $previous = \Drupal::state()->get('gg_members_app.previous');
   if ($previous && !$is_syncing) {
     if (\Drupal::service('theme_handler')->themeExists($previous['theme'])) {

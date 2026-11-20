@@ -33,6 +33,17 @@ gg_members_attendance.checkin:
   options:
     no_cache: TRUE
 
+# The door account's own home page: open the scanner, today's count, log
+# out. An easy address to type again on the door device (/eisodos).
+gg_members_attendance.door:
+  path: '/eisodos'
+  defaults:
+    _controller: '\Drupal\gg_members_attendance\Controller\ScanController::door'
+  requirements:
+    _access: 'TRUE'
+  options:
+    no_cache: TRUE
+
 # The scanner on the door device: the camera, full screen.
 gg_members_attendance.scan:
   path: '/admin/members/attendance/scan'

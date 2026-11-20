@@ -47,6 +47,7 @@ class DayForm extends FormBase {
     $form['#attributes']['lang'] = 'el';
     $form['#attached']['library'][] = 'gg_members/admin';
     $form['#attached']['library'][] = 'gg_members_attendance/admin';
+    $form['#attached']['library'][] = 'gg_members_attendance/member-search';
     $form['#cache']['max-age'] = 0;
     $form['date'] = ['#type' => 'value', '#value' => $date];
 
@@ -69,6 +70,11 @@ class DayForm extends FormBase {
       '#title' => $this->t('Ήρθε χωρίς κάρτα;'),
       '#options' => $options,
       '#empty_option' => $this->t('- Επιλέξτε μέλος -'),
+      // A search box instead of a long list (js/member-search.js).
+      '#attributes' => [
+        'data-gg-member-search' => '1',
+        'data-placeholder' => $this->t('Γράψτε όνομα μέλους…'),
+      ],
     ];
     $form['add']['submit'] = [
       '#type' => 'submit',

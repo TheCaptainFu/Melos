@@ -124,10 +124,10 @@ function gg_members_app_preprocess_page(array &$variables) {
     return;
   }
   $club = (string) \Drupal::config('system.site')->get('name');
-  // The club's own logo, if its website theme had one.
-  $logo = NULL;
+  // The club's logo from the settings, else its website theme's, if any.
+  $logo = gg_members_app_logo_url();
   $previous = \Drupal::state()->get('gg_members_app.previous');
-  if (!empty($previous['theme']) && !theme_get_setting('logo.use_default', $previous['theme'])) {
+  if (!$logo && !empty($previous['theme']) && !theme_get_setting('logo.use_default', $previous['theme'])) {
     $logo = theme_get_setting('logo.url', $previous['theme']) ?: NULL;
   }
   $variables['gg_login'] = [
@@ -141,6 +141,7 @@ function gg_members_app_preprocess_page(array &$variables) {
   ];
   $variables['#attached']['library'][] = 'gg_members_app/login';
   $variables['#cache']['tags'][] = 'config:system.site';
+  $variables['#cache']['tags'][] = 'config:gg_members_app.settings';
   $variables['#cache']['contexts'][] = 'route';
 }
 
@@ -254,9 +255,11 @@ function gg_members_app_menu_local_tasks_alter(array &$data, $route_name) {
  * Implements hook_toolbar_alter().
  *
  * The club's account has none of Drupal's administration, so no empty
- * "Manage" tray — just its name and the members' own tab.
+ * "Manage" tray — just its name and the members' own tab. And no "Back to
+ * site": there is no site.
  */
 function gg_members_app_toolbar_alter(array &$items) {
+  unset($items['home']);
   if (!\Drupal::currentUser()->hasPermission('access administration pages')) {
     unset($items['administration']);
   }
@@ -278,4 +281,71 @@ function gg_members_app_preprocess_links__toolbar_user(array &$variables) {
       $variables['links'][$key]['link']['#title'] = $title;
     }
   }
+}
+
+/**
+ * The club logo uploaded in the settings, as a URL (NULL: none).
+ */
+function gg_members_app_logo_url(): ?string {
+  $fid = (int) \Drupal::config('gg_members_app.settings')->get('logo');
+  $file = $fid ? \Drupal\file\Entity\File::load($fid) : NULL;
+  return $file ? $file->createFileUrl() : NULL;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for the members' settings.
+ *
+ * No website to set them on: the club's name and logo are here, on top.
+ */
+function gg_members_app_form_gg_members_settings_form_alter(array &$form, FormStateInterface $form_state) {
+  $logo = (int) \Drupal::config('gg_members_app.settings')->get('logo');
+  $form['gg_members_app'] = \Drupal\gg_members\Form\SettingsForm::section(
+    t('Στοιχεία συλλόγου'),
+    t('Το όνομα φαίνεται παντού: σύνδεση, σαρωτής, κάρτες και email των μελών. Το λογότυπο φαίνεται στη σελίδα σύνδεσης.')
+  ) + ['#weight' => -50];
+  $form['gg_members_app']['gg_members_app_name'] = [
+    '#type' => 'textfield',
+    '#title' => t('Όνομα σχολής / συλλόγου'),
+    '#default_value' => \Drupal::config('system.site')->get('name'),
+    '#required' => TRUE,
+    '#maxlength' => 120,
+  ];
+  $form['gg_members_app']['gg_members_app_logo'] = [
+    '#type' => 'managed_file',
+    '#title' => t('Λογότυπο'),
+    '#description' => t('PNG, JPG, SVG ή WEBP, έως 2 MB. Καλύτερα τετράγωνο, με διάφανο φόντο.'),
+    '#upload_location' => 'public://gg_members_app',
+    '#upload_validators' => [
+      'FileExtension' => ['extensions' => 'png jpg jpeg svg webp'],
+      'FileSizeLimit' => ['fileLimit' => 2 * 1024 * 1024],
+    ],
+    '#default_value' => $logo ? [$logo] : [],
+  ];
+  $form['#submit'][] = 'gg_members_app_settings_submit';
+}
+
+/**
+ * Saves the club's name and logo.
+ */
+function gg_members_app_settings_submit(array &$form, FormStateInterface $form_state) {
+  \Drupal::configFactory()->getEditable('system.site')
+    ->set('name', trim($form_state->getValue('gg_members_app_name')))
+    ->save();
+
+  $config = \Drupal::configFactory()->getEditable('gg_members_app.settings');
+  $old = (int) $config->get('logo');
+  $new = (int) (((array) $form_state->getValue('gg_members_app_logo'))[0] ?? 0);
+  if ($old === $new) {
+    return;
+  }
+  $usage = \Drupal::service('file.usage');
+  if ($old && ($file = \Drupal\file\Entity\File::load($old))) {
+    $usage->delete($file, 'gg_members_app', 'config', 1);
+  }
+  if ($new && ($file = \Drupal\file\Entity\File::load($new))) {
+    $file->setPermanent();
+    $file->save();
+    $usage->add($file, 'gg_members_app', 'config', 1);
+  }
+  $config->set('logo', $new)->save();
 }

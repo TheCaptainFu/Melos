@@ -4,4 +4,5 @@ description: 'Program only (μόνο πρόγραμμα): no public website — 
 core_version_requirement: ^10||^11
 package: Custom
 dependencies:
+  - drupal:file
   - gg_members:gg_members

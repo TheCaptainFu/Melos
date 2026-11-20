@@ -72,6 +72,25 @@ function gg_members_attendance_theme() {
         'jsqr_url' => NULL,
         'scanner_js_url' => NULL,
         'back_url' => NULL,
+        'back_label' => NULL,
+        'logo' => NULL,
+        'initial' => NULL,
+        'date' => NULL,
+      ],
+    ],
+    'gg_members_attendance_door' => [
+      'template' => 'gg-members-attendance-door',
+      'variables' => [
+        'club' => NULL,
+        'today' => 0,
+        'recent' => [],
+        'scanner_url' => NULL,
+        'logout_url' => NULL,
+        'address' => NULL,
+        'manage_url' => NULL,
+        'logo' => NULL,
+        'initial' => NULL,
+        'date' => NULL,
       ],
     ],
     'gg_members_attendance_month' => [
@@ -196,18 +215,28 @@ function gg_members_attendance_gg_members_member_delete(int $id) {
 /**
  * Implements hook_user_login().
  *
- * The door device's account ("Είσοδος": may scan, nothing else) goes
- * straight to the scanner after logging in, unless the login link says
- * where to go.
+ * The door device's account ("Είσοδος": may scan, nothing else) goes to
+ * its own home page (/eisodos) after logging in, unless the login link
+ * says where to go.
  */
 function gg_members_attendance_user_login(AccountInterface $account) {
-  if (!$account->hasPermission('record gg_members attendance') || $account->hasPermission('manage gg_members attendance')) {
+  if (!gg_members_attendance_is_door($account)) {
     return;
   }
   $request = \Drupal::request();
   if (!$request->query->has('destination')) {
-    $request->query->set('destination', Url::fromRoute('gg_members_attendance.scan')->toString());
+    $request->query->set('destination', Url::fromRoute('gg_members_attendance.door')->toString());
   }
+}
+
+/**
+ * The door device's account: may scan, nothing else.
+ */
+function gg_members_attendance_is_door(AccountInterface $account): bool {
+  return $account->isAuthenticated()
+    && $account->hasPermission('record gg_members attendance')
+    && !$account->hasPermission('manage gg_members attendance')
+    && !$account->hasPermission('administer gg_members');
 }
 
 /**

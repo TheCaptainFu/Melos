@@ -75,6 +75,11 @@ class LoginWall implements EventSubscriberInterface {
     if (in_array($request->attributes->get(RouteObjectInterface::ROUTE_NAME), self::OPEN_ROUTES, TRUE)) {
       return;
     }
+    // A call from a script (the scanner's, a form's AJAX) gets its own
+    // refusal, not the login page's HTML.
+    if ($request->isXmlHttpRequest() || in_array('application/json', $request->getAcceptableContentTypes(), TRUE) || $request->getContentTypeFormat() === 'json') {
+      return;
+    }
     // Back to the page asked for after logging in, unless it was the
     // front page (then the members, see gg_members_app_user_login()).
     $options = ['absolute' => TRUE];

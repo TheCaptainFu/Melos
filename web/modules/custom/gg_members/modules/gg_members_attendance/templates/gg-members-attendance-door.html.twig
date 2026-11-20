@@ -1,0 +1,107 @@
+{#
+/**
+ * @file
+ * The door account's home page (/eisodos): open the scanner, who came
+ * today, log out. Same dark look as the scanner.
+ *
+ * Available variables:
+ * - club, logo (URL or NULL), initial, date (today, in Greek),
+ *   today (how many came today), recent (the last few: name, time),
+ *   scanner_url, logout_url, address (this page's address, to type again),
+ *   manage_url (the Παρουσιολόγιο tab, for the coach; NULL otherwise).
+ */
+#}
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0b1120">
+  <title>{{ 'Είσοδος'|t }} — {{ club }}</title>
+  {% include '@gg_members_attendance/gg-members-attendance-door.css.twig' %}
+  <style>
+    .door { min-height: 100%; display: flex; justify-content: center; padding: max(32px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom)); }
+    .door__inner { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 20px; }
+    .door__head { margin-bottom: 6px; }
+    .door__scan { flex-direction: column; gap: 10px; min-height: 168px; border-radius: 24px; }
+    .door__scan-icon { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 18px; background: rgba(255,255,255,.16); }
+    .door__scan-icon svg { width: 36px; height: 36px; }
+    .door__scan-hint { font-size: .9rem; font-weight: 500; opacity: .85; text-align: center; }
+    .door__today { display: flex; align-items: center; gap: 18px; padding: 18px 20px; }
+    .door__count { min-width: 64px; font-size: 2.8rem; font-weight: 800; line-height: 1; text-align: center; font-variant-numeric: tabular-nums; }
+    .door__today-text { display: flex; flex-direction: column; gap: 3px; }
+    .door__today-text strong { font-size: 1.05rem; }
+    .door__recent { margin: 0; padding: 6px 0; list-style: none; }
+    .door__recent-title { margin: 4px 4px -10px; font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    .door__recent li { display: flex; align-items: center; gap: 12px; padding: 10px 16px; }
+    .door__recent li + li { border-top: 1px solid rgba(255,255,255,.06); }
+    .door__avatar { display: grid; place-items: center; width: 34px; height: 34px; flex: none; border-radius: 50%; background: rgba(34,197,94,.16); color: #86efac; font-size: .95rem; font-weight: 800; }
+    .door__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .door__time { font-variant-numeric: tabular-nums; }
+    .door__empty { margin: 0; padding: 4px 4px 0; text-align: center; font-size: .95rem; }
+    .door__foot { margin-top: auto; padding-top: 18px; display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
+    .door__address { margin: 0; font-size: .88rem; line-height: 1.6; }
+    .door__address strong { display: inline-block; margin-top: 2px; padding: 3px 10px; border-radius: 8px; background: rgba(255,255,255,.07); color: #e2e8f0; font-weight: 600; letter-spacing: .01em; }
+    .door__links { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+  </style>
+</head>
+<body class="g-bg">
+  <main class="door">
+    <div class="door__inner">
+      <header class="door__head g-brand">
+        {% if logo %}<img class="g-logo" src="{{ logo }}" alt="">{% else %}<span class="g-mark" aria-hidden="true">{{ initial }}</span>{% endif %}
+        <h1 class="g-club">{{ club }}</h1>
+        <span class="g-pill">{{ 'Είσοδος'|t }}</span>
+      </header>
+
+      <a class="g-primary door__scan" href="{{ scanner_url }}">
+        <span class="door__scan-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="4" height="4" rx=".5"/><rect x="13" y="13" width="4" height="4" rx=".5"/><path d="M13 7h4v2M7 15v2h2"/></svg>
+        </span>
+        {{ 'Άνοιξε τον σαρωτή'|t }}
+        <span class="door__scan-hint">{{ 'Τα μέλη δείχνουν την κάρτα τους στην κάμερα'|t }}</span>
+      </a>
+
+      <section class="door__today g-card">
+        <span class="door__count">{{ today }}</span>
+        <span class="door__today-text">
+          <strong>{{ today == 1 ? 'μέλος ήρθε σήμερα'|t : 'μέλη ήρθαν σήμερα'|t }}</strong>
+          <span class="g-muted">{{ date }}</span>
+        </span>
+      </section>
+
+      {% if recent %}
+        <p class="door__recent-title g-muted">{{ 'Τελευταίοι'|t }}</p>
+        <ul class="door__recent g-card">
+          {% for row in recent %}
+            <li>
+              <span class="door__avatar" aria-hidden="true">{{ row.name|first|upper }}</span>
+              <span class="door__name">{{ row.name }}</span>
+              <span class="door__time g-muted">{{ row.time }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="door__empty g-muted">{{ 'Δεν έχει έρθει κανείς ακόμα σήμερα.'|t }}</p>
+      {% endif %}
+
+      <footer class="door__foot">
+        <p class="door__address g-muted">{{ 'Αν χαθεί η σελίδα, γράψε στον browser:'|t }}<br><strong>{{ address }}</strong></p>
+        <div class="door__links">
+          {% if manage_url %}
+            <a class="g-ghost" href="{{ manage_url }}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              {{ 'Παρουσιολόγιο'|t }}
+            </a>
+          {% endif %}
+          <a class="g-ghost" href="{{ logout_url }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            {{ 'Αποσύνδεση'|t }}
+          </a>
+        </div>
+      </footer>
+    </div>
+  </main>
+</body>
+</html>

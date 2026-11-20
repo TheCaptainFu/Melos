@@ -1,0 +1,7 @@
+gg_members_app.settings:
+  type: config_object
+  label: 'GG Members App settings'
+  mapping:
+    logo:
+      type: integer
+      label: 'The club logo (file ID), 0 for none'

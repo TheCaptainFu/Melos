@@ -19,3 +19,8 @@ services:
       - '@entity_type.manager'
       - '@file_system'
       - '@image.factory'
+  gg_members_attendance.door_home:
+    class: Drupal\gg_members_attendance\EventSubscriber\DoorHome
+    arguments: ['@current_user']
+    tags:
+      - { name: event_subscriber }

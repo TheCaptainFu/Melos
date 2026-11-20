@@ -13,4 +13,21 @@
   .result__class { margin: 0; font-size: 1.2rem; opacity: .9; }
   .result__title { margin: 18px 0 0; font-size: 2.6rem; font-weight: 800; line-height: 1.1; }
   .result__note { margin: 4px 0 0; font-size: 1.4rem; opacity: .95; }
+
+  /* The door's own pages (home, scanner start): one calm dark look. */
+  .g-bg { background: radial-gradient(120% 70% at 50% -10%, #1e3a8a 0%, rgba(30,58,138,0) 60%), radial-gradient(90% 60% at 100% 110%, #172554 0%, rgba(23,37,84,0) 60%), #0b1120; }
+  .g-brand { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+  .g-mark { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 20px; background: linear-gradient(145deg, #3b82f6, #1d4ed8); box-shadow: 0 8px 24px rgba(37,99,235,.45), inset 0 1px 0 rgba(255,255,255,.25); font-size: 1.9rem; font-weight: 800; }
+  .g-logo { display: block; max-width: 96px; max-height: 72px; object-fit: contain; filter: drop-shadow(0 6px 16px rgba(0,0,0,.35)); }
+  .g-club { margin: 0; font-size: 1.45rem; font-weight: 800; line-height: 1.2; letter-spacing: .01em; }
+  .g-pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; background: rgba(96,165,250,.14); color: #bfdbfe; font-size: .78rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+  .g-pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.25); }
+  .g-ghost { display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px; border: 1px solid rgba(255,255,255,.18); border-radius: 14px; background: rgba(255,255,255,.06); color: #e2e8f0; font: inherit; font-size: .95rem; font-weight: 600; text-decoration: none; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .g-ghost:hover, .g-ghost:focus-visible { background: rgba(255,255,255,.12); }
+  .g-ghost svg { width: 18px; height: 18px; flex: none; }
+  .g-primary { display: flex; align-items: center; justify-content: center; gap: 14px; width: 100%; min-height: 76px; padding: 18px 22px; border: 0; border-radius: 20px; background: linear-gradient(145deg, #3b82f6, #1d4ed8); color: #fff; font: inherit; font-size: 1.35rem; font-weight: 800; text-decoration: none; cursor: pointer; box-shadow: 0 14px 34px rgba(37,99,235,.45), inset 0 1px 0 rgba(255,255,255,.25); transition: transform .12s ease, box-shadow .12s ease; }
+  .g-primary:active { transform: scale(.98); box-shadow: 0 8px 20px rgba(37,99,235,.4); }
+  .g-primary svg { width: 32px; height: 32px; flex: none; }
+  .g-card { border: 1px solid rgba(255,255,255,.08); border-radius: 20px; background: rgba(255,255,255,.05); }
+  .g-muted { color: #94a3b8; }
 </style>

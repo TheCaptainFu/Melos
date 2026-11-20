@@ -1,5 +1,10 @@
 admin:
-  version: 1.0.5
+  version: 1.0.7
   css:
     theme:
       css/attendance.css: {}
+
+member-search:
+  version: 1.0.0
+  js:
+    js/member-search.js: {}
