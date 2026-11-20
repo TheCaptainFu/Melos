@@ -110,9 +110,27 @@ function gg_members_attendance_table(): array {
  * Every member there already gets a card, and there's a "Είσοδος" role for
  * the door device.
  */
-function gg_members_attendance_install() {
+function gg_members_attendance_install($is_syncing) {
   \Drupal::service('gg_members_attendance.cards')->ensureAll();
-  gg_members_attendance_door_role();
+  // On a config import the roles come with the imported config.
+  if (!$is_syncing) {
+    gg_members_attendance_door_role();
+    gg_members_attendance_grant_managers();
+  }
+}
+
+/**
+ * Whoever runs the members (e.g. the club's Editor) gets the attendance
+ * too: the Παρουσιολόγιο tab and the scanner.
+ */
+function gg_members_attendance_grant_managers(): void {
+  foreach (\Drupal::entityTypeManager()->getStorage('user_role')->loadMultiple() as $role) {
+    if ($role->id() !== 'administrator' && $role->hasPermission('administer gg_members')) {
+      $role->grantPermission('manage gg_members attendance');
+      $role->grantPermission('record gg_members attendance');
+      $role->save();
+    }
+  }
 }
 
 /**

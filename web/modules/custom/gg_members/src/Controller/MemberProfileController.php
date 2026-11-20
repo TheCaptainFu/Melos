@@ -73,6 +73,7 @@ class MemberProfileController extends ControllerBase {
         'phone' => $record->phone,
         'email' => $record->email,
         'card_number' => $record->card_number,
+        'grade' => $record->grade ?? NULL,
         'amka' => $record->amka,
         'guardian_name' => $record->guardian_name,
         'guardian_phone' => $record->guardian_phone,

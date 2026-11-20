@@ -77,6 +77,14 @@ class MemberForm extends FormBase {
       '#attributes' => ['autocomplete' => 'off'],
     ];
 
+    $form['personal']['grade'] = [
+      '#type' => 'select',
+      '#title' => $this->t('GUP/DAN'),
+      '#options' => MemberManager::gradeOptions(),
+      '#empty_option' => $this->t('- Χωρίς -'),
+      '#default_value' => $this->member->grade ?? '',
+    ];
+
     $form['personal']['amka'] = [
       '#type' => 'textfield',
       '#title' => $this->t('ΑΜΚΑ'),
@@ -328,6 +336,7 @@ class MemberForm extends FormBase {
       'enrollment_date' => $form_state->getValue('enrollment_date'),
       'birth_date' => $form_state->getValue('birth_date'),
       'card_number' => trim((string) $form_state->getValue('card_number')),
+      'grade' => (string) $form_state->getValue('grade'),
       'amka' => trim((string) $form_state->getValue('amka')),
       'status' => $form_state->getValue('status'),
       'left_date' => $form_state->getValue('status')

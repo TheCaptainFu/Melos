@@ -31,6 +31,7 @@ class MemberExportController extends ControllerBase {
         'Ονοματεπώνυμο',
         'Ημερομηνία γέννησης',
         'Αριθμός δελτίου',
+        'GUP/DAN',
         'ΑΜΚΑ',
         'Τάξη',
         'Μηνιαία συνδρομή (€)',
@@ -65,6 +66,7 @@ class MemberExportController extends ControllerBase {
           $birth ? $birth->format('d/m/Y') : $record->birth_date,
           // Text, like ΑΜΚΑ, so leading zeros survive.
           $record->card_number ? '="' . $record->card_number . '"' : '',
+          $record->grade ?? '',
           // Prefixed so Excel keeps it as text (no leading-zero loss / 1E+10).
           $record->amka ? '="' . $record->amka . '"' : '',
           $record->class_name,

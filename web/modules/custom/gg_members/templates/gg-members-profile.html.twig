@@ -5,7 +5,7 @@
  *
  * Available variables:
  * - member: name, class_name, status, age, birth_date, enrollment_date,
- *   left_date, monthly_fee, phone, email, card_number, amka, guardian_name, guardian_phone,
+ *   left_date, monthly_fee, phone, email, card_number, grade, amka, guardian_name, guardian_phone,
  *   notes, photo_url (dates already formatted as dd/mm/YYYY).
  * - finance: unpaid_months (formatted), outstanding, total_paid,
  *   payment_count, last_payment_date.
@@ -69,6 +69,8 @@
         <dd>{% if member.email %}<a href="mailto:{{ member.email }}">{{ member.email }}</a>{% else %}-{% endif %}</dd>
         <dt>{{ 'Αριθμός δελτίου'|t }}</dt>
         <dd>{{ member.card_number ?: '-' }}</dd>
+        <dt>{{ 'GUP/DAN'|t }}</dt>
+        <dd>{{ member.grade ?: '-' }}</dd>
         <dt>{{ 'ΑΜΚΑ'|t }}</dt>
         <dd>{{ member.amka ?: '-' }}</dd>
       </dl>

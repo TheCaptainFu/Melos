@@ -80,6 +80,12 @@ function gg_members_schema() {
         'not null' => FALSE,
         'description' => 'Athlete card number (αριθμός δελτίου).',
       ],
+      'grade' => [
+        'type' => 'varchar',
+        'length' => 16,
+        'not null' => FALSE,
+        'description' => 'Grade (GUP/DAN), e.g. "3 Gup" or "1 Dan".',
+      ],
       'status' => [
         'type' => 'int',
         'size' => 'tiny',
@@ -528,4 +534,19 @@ function gg_members_update_10013(): void {
  */
 function gg_members_update_10014(): void {
   \Drupal::service('module_installer')->install(['gg_members_expenses', 'gg_members_stats']);
+}
+
+/**
+ * Adds the member's grade (GUP/DAN).
+ */
+function gg_members_update_10015(): void {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->fieldExists('gg_members_member', 'grade')) {
+    $schema->addField('gg_members_member', 'grade', [
+      'type' => 'varchar',
+      'length' => 16,
+      'not null' => FALSE,
+      'description' => 'Grade (GUP/DAN), e.g. "3 Gup" or "1 Dan".',
+    ]);
+  }
 }

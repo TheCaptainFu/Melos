@@ -471,6 +471,21 @@ class MemberManager {
   }
 
   /**
+   * The grades (GUP/DAN) a member can have: 10 Gup up to 1 Gup, then
+   * 1 Dan up to 9 Dan.
+   */
+  public static function gradeOptions(): array {
+    $options = [];
+    foreach (range(10, 1) as $gup) {
+      $options["$gup Gup"] = "$gup Gup";
+    }
+    foreach (range(1, 9) as $dan) {
+      $options["$dan Dan"] = "$dan Dan";
+    }
+    return $options;
+  }
+
+  /**
    * Formats a ledger month as e.g. "Σεπτέμβριος 2026", adding what's left
    * for a partly paid one: "Σεπτέμβριος 2026 (υπόλοιπο 10,00€)".
    */
@@ -570,6 +585,7 @@ class MemberManager {
       'enrollment_date' => $data['enrollment_date'] ?? NULL,
       'birth_date' => ($data['birth_date'] ?? NULL) ?: NULL,
       'card_number' => ($data['card_number'] ?? NULL) ?: NULL,
+      'grade' => isset(self::gradeOptions()[$data['grade'] ?? '']) ? $data['grade'] : NULL,
       'amka' => ($data['amka'] ?? NULL) ?: NULL,
       'status' => (int) ($data['status'] ?? 1),
       'left_date' => ($data['left_date'] ?? NULL) ?: NULL,
